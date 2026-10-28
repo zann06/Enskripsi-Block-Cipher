@@ -22,6 +22,20 @@
 
 ---
 
+## Tentang Aplikasi (About)
+
+**CipherLab** adalah perangkat lunak berbasis web dan laboratorium kriptografi interaktif yang dirancang khusus untuk kebutuhan pembelajaran mata kuliah Kriptografi dan Keamanan Informasi. Aplikasi ini mengimplementasikan jaringan Feistel 16-bit sederhana namun komprehensif, memungkinkan mahasiswa dan praktisi untuk mempelajari secara mendalam cara kerja internal dari operasi *block cipher* serta mode-mode pengoperasian standarnya.
+
+Melalui antarmuka berbasis Streamlit yang responsif dan modern, pengguna dapat:
+- Melakukan enkripsi dan dekripsi menggunakan mode **ECB (Electronic Codebook)**, **CBC (Cipher Block Chaining)**, dan **CTR (Counter Mode)**.
+- Menelusuri proses internal per blok secara transparan (representasi HEX dan Biner).
+- Mengamati proses penjadwalan kunci ($k_1$ hingga $k_8$) serta ronde Feistel langkah demi langkah.
+- Memverifikasi hasil eksekusi secara otomatis dan menyusun laporan praktikum profesional berformat PDF secara instan menggunakan ReportLab.
+
+Aplikasi ini dibuat murni untuk tujuan edukasi agar konsep-konsep teoretis kriptografi modern dapat divisualisasikan dengan mudah dan intuitif.
+
+---
+
 ## Features
 
 - **3 Operating Modes**:
