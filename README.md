@@ -111,11 +111,30 @@ Do not declare tests passing before this command actually succeeds.
 | **Block dependency** | Independent | Depends on previous block | Through counter/keystream |
 | **Repeated blocks** | Visible in ciphertext | Masked by chaining | Different keystreams |
 
+## Contoh Laporan PDF
+
+Laporan contoh ini dibuat dari eksekusi actual aplikasi CipherLab dan dapat digunakan sebagai referensi visual:
+
+<div align="center">
+
+[<img src="docs/screenshots/reports.png" alt="Preview Laporan PDF" width="300"/>](docs/contoh-laporan.pdf)
+
+</div>
+
+**Unduh Laporan Contoh:**
+[Laporan_CipherLab_contoh-Farid.pdf](docs/contoh-laporan.pdf)
+
+*Catatan: File laporan ini dibuat dari data eksekusi aktual aplikasi dengan mode ECB/CBC/CTR yang berhasil diverifikasi. Setiap nilai, tabel blok, trace, dan status verifikasi diambil dari objek hasil eksekusi yang sama dengan yang ditampilkan pada antarmuka aplikasi. Laporan ini menyertakan disclaimer edukasi bahwa cipher 16-bit hanya untuk tujuan pembelajaran.*
+
+---
+
 ## Screenshots / Demo
 
 > **Note:** Screenshots must be captured from the actual running application (`streamlit run app.py`). 
 > To add screenshots, run the application, open in browser at `http://localhost:8501`, and capture using 
 > your OS screenshot tool. Save files in `docs/screenshots/`. Then embed them in the relevant sections below.
+
+<div align="center">
 
 <div align="center">
 
