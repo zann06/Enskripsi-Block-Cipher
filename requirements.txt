@@ -1,0 +1,7 @@
+# CipherLab dependencies (Python 3.10+)
+streamlit>=1.36
+reportlab>=4.0
+
+# Pengujian
+pytest>=8.0
+pypdf>=4.0          # ekstraksi teks PDF untuk memverifikasi isi laporan di test

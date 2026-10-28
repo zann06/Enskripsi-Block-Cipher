@@ -1,0 +1,7 @@
+# Design tokens CipherLab (lihat DESIGN-REFERENCE.md)
+[theme]
+base = "dark"
+primaryColor = "#8B5CF6"
+backgroundColor = "#0B1020"
+secondaryBackgroundColor = "#151C30"
+textColor = "#F3F4F6"
