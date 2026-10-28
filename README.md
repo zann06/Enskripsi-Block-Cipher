@@ -313,7 +313,7 @@ The application features a modern, dark-themed Streamlit interface with the foll
 - Ekspor Markdown / CSV
 
 ### Arsitektur (Konseptual)
-<img src="docs/DESIGN-REFERENCE.png" alt="Arsitektur Desain CipherLab" width="400"/>
+<img src="[docs/DESIGN-REFERENCE.png" alt="Arsitektur Desain CipherLab](https://github.com/zann06/Enskripsi-Block-Cipher/blob/master/design-reference.png)" width="400"/>
 
 *Gambar di atas merancang visual CipherLab sebagai referensi komposisi UI/UX.*
 
