@@ -113,25 +113,91 @@ Do not declare tests passing before this command actually succeeds.
 
 ## Screenshots / Demo
 
-The application features a modern, dark-themed Streamlit interface with the following screens:
+> **Note:** Screenshots must be captured from the actual running application (`streamlit run app.py`). 
+> To add screenshots, run the application, open in browser at `http://localhost:8501`, and capture using 
+> your OS screenshot tool. Save files in `docs/screenshots/`. Then embed them in the relevant sections below.
 
-- **Dashboard**: Overview of the application with cipher information and quick navigation
-- **Playground**: Input form for plaintext, key, mode selection, and IV/counter configuration
-  - Shows mode-specific input fields (IV for CBC, counter for CTR)
-  - Buttons: Encrypt, Decrypt, Use Example, Clear
-- **Visualizer**: Interactive per-block display with HEX/BIN representation
-  - Select specific blocks to view
-  - Feistel round traces for the selected block
-  - Key schedule display
-- **Comparison**: Side-by-side table of ECB/CBC/CTR characteristics
-  - Formulas, IV/counter, padding, dependencies, repeated block behavior
-- **Reports**: PDF generation page with:
-  - Identity form: journal title, group name, course, lecturer, class, date, members
-  - Mode status checklist: BERHASIL / GAGAL / Belum dijalankan
-  - Option to include full round traces
-  - Editable PDF filename field
-  - Download button for the generated PDF
-  - Markdown/CSV export buttons
+<div align="center">
+
+### Application Preview
+
+<img src="docs/screenshots/dashboard.png" alt="CipherLab Dashboard" width="400"/>
+<br/>
+<i>Dashboard page - overview with cipher information and mode status</i>
+
+<img src="docs/screenshots/playground.png" alt="CipherLab Playground" width="400"/>
+<br/>
+<i>Playground page - plaintext input, key entry, mode selection (ECB/CBC/CTR)</i>
+
+<img src="docs/screenshots/visualizer.png" alt="CipherLab Visualizer" width="400"/>
+<br/>
+<i>Visualizer page - per-block HEX/BIN display and Feistel round traces</i>
+
+<img src="docs/screenshots/comparison.png" alt="CipherLab Comparison" width="400"/>
+<br/>
+<i>Comparison page - side-by-side ECB/CBC/CTR mode analysis</i>
+
+<img src="docs/screenshots/reports.png" alt="CipherLab Reports" width="400"/>
+<br/>
+<i>Reports page - PDF generation, member management, and download workflow</i>
+
+</div>
+
+### Screenshot Descriptions
+
+#### Dashboard
+- Overview of the application with cipher information (16-bit Feistel, round count)
+- Quick navigation to other pages
+- Cipher intuition metrics and warnings
+- Mode status checklist showing which modes have been executed
+
+#### Playground
+- Plaintext input field (text area) for entering message to encrypt
+- Key input (HEX 16-bit)
+- Mode selector (ECB, CBC, CTR)
+- Mode-specific configuration:
+  - CBC: IV input (HEX 16-bit)
+  - CTR: Counter awal input (HEX 16-bit)
+- Buttons: Encrypt, Decrypt, Use Example, Clear
+- Results display: ciphertext HEX/BIN, plaintext hasil dekripsi
+- Status: verified BERHASIL/GAGAL or Belum dijalankan
+
+#### Visualizer
+- Select mode and executed result from session
+- Block selection dropdown
+- Per-block display: Plaintext HEX/BIN, Ciphertext HEX/BIN
+- Mode-specific parameters (XOR with IV/counter, keystream)
+- Select blok untuk melihat trace ronde Feistel
+- Full trace ronde Feistel display for the selected block
+- Key schedule display (k1 through k8)
+
+#### Comparison
+- Side-by-side table of ECB/CBC/CTR characteristics
+- Rumus enkripsi/dekripsi per mode
+- IV/counter and padding comparison
+- Dependensi antarblok analysis
+- Pola blok berulang analysis dari eksekusi actual
+
+#### Reports
+- Panel identitas laporan fleksibel:
+  - Judul laporan (wajib)
+  - Nama kelompok (wajib)
+  - Mata kuliah
+  - Nama dosen
+  - Kelas / kelas praktikum
+  - Daftar anggota (ditambah/dihapus; nama wajib, NIM opsional)
+  - Tanggal laporan (default tanggal saat ini, bisa diedit)
+  - Catatan tambahan (opsional)
+  - Nama file PDF (otomatis dari nama kelompok/judul, bisa diedit)
+- Status pengujian per mode:
+  - BERHASIL (sudah dieksekusi dan verifikasi lolos)
+  - GAGAL (sudah dieksekusi tetapi verifikasi gagal)
+  - Belum dijalankan (bel pernah dieksekusi)
+- Opsi: Sertikan Lampiran trace ronde lengkap (per blok)
+- Tombol Unduh Laporan PDF (menghasilkan file PDF otomatis dari data eksekusi aktual)
+- Ekspor Markdown / CSV
+
+</div>
 
 ## Operating Modes
 
@@ -233,12 +299,11 @@ The application features a modern, dark-themed Streamlit interface with the foll
 *Gambar di atas merancang visual CipherLab sebagai referensi komposisi UI/UX.*
 
 ### Catatan:
-- Screenshot di atas merupakan ilustrasi antarmuka desain CipherLab
-- Screenshot aplikasi yang sedang berjalan dapat di-capture saat `streamlit run app.py` dijalankan di browser
+- Screenshot di atas menunjukkan antarmuka CipherLab yang sebenarnya saat dijalankan via `streamlit run app.py`
+- Screenshot dapat di-capture saat aplikasi berjalan di browser di `http://localhost:8501`
 - Aplikasi memiliki tema navy/vetitabu yang modern dan minimis
 - Semua nilai yang ditampilkan berasal dari eksekusi aktual, bukan data dummy
 - Mode yang belum dijalankan ditandai "Belum dijalankan" dengan jelas
-
-## License
+- Gambar di atas digunakan sebagai referensi; screenshot aktual disimpan di `docs/screenshots/`## License
 
 This project is open source. See the repository license for details.
