@@ -111,6 +111,48 @@ Do not declare tests passing before this command actually succeeds.
 | **Block dependency** | Independent | Depends on previous block | Through counter/keystream |
 | **Repeated blocks** | Visible in ciphertext | Masked by chaining | Different keystreams |
 
+## Screenshots / Demo
+
+The application features a modern, dark-themed Streamlit interface with the following screens:
+
+- **Dashboard**: Overview of the application with cipher information and quick navigation
+- **Playground**: Input form for plaintext, key, mode selection, and IV/counter configuration
+  - Shows mode-specific input fields (IV for CBC, counter for CTR)
+  - Buttons: Encrypt, Decrypt, Use Example, Clear
+- **Visualizer**: Interactive per-block display with HEX/BIN representation
+  - Select specific blocks to view
+  - Feistel round traces for the selected block
+  - Key schedule display
+- **Comparison**: Side-by-side table of ECB/CBC/CTR characteristics
+  - Formulas, IV/counter, padding, dependencies, repeated block behavior
+- **Reports**: PDF generation page with:
+  - Identity form: journal title, group name, course, lecturer, class, date, members
+  - Mode status checklist: BERHASIL / GAGAL / Belum dijalankan
+  - Option to include full round traces
+  - Editable PDF filename field
+  - Download button for the generated PDF
+  - Markdown/CSV export buttons
+
+## Operating Modes
+
+### ECB (Electronic Codebook)
+- Each block encrypted independently: `C_i = E_K(P_i)`
+- No IV required
+- Repeated plaintext blocks produce repeated ciphertext blocks (visible pattern)
+- Fastest of the three modes but leaks pattern information
+
+### CBC (Cipher Block Chaining)
+- Each block XORed with previous ciphertext before encryption: `C_i = E_K(P_i \oplus C_{i-1})`
+- Requires IV as `C_0`
+- Repeated plaintext blocks produce different ciphertext due to chaining
+- PKCS#7 padding applied (2-byte blocks)
+
+### CTR (Counter)
+- Each block XORed with keystream from encrypted counter: `C_i = P_i \oplus E_K(T_i)`
+- Counter increments by +1 per block, no padding
+- Plaintext length preserved exactly
+- Counter must not overflow past 0xFFFF
+
 ## Security Disclaimer
 
 This 16-bit toy cipher is **strictly for educational purposes only**.
