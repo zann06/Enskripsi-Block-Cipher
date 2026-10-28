@@ -1,172 +1,135 @@
-# CipherLab — Block Cipher Playground
+# CipherLab — 16-bit Block Cipher Laboratory
 
-CipherLab adalah aplikasi web edukasi berbasis Python + Streamlit untuk mempelajari enkripsi dan dekripsi block cipher dengan mode ECB, CBC, dan CTR menggunakan ukuran blok 16 bit (2 byte).
+## Overview
 
-> **Peringatan:** Jika menggunakan toy Feistel 16-bit, algoritma tersebut hanya untuk pembelajaran dan tidak aman untuk melindungi data nyata. AES memiliki ukuran blok 128 bit, bukan 16 bit.
+CipherLab is an educational web application for learning block cipher operations using a 16-bit Feistel network. The implementation uses Python and Streamlit for the interactive interface, ReportLab for PDF report generation, and Pytest for automated testing.
 
-## Fitur yang Direncanakan
+**Important:** This is an educational cipher with 16-bit blocks and keys. It is **not** AES and **must not** be used to protect real-sensitive data.
 
-- Playground enkripsi dan dekripsi.
-- Pilihan ECB, CBC, dan CTR.
-- Tampilan HEX dan biner per blok.
-- Visualisasi XOR, IV/chaining, counter, dan keystream.
-- Verifikasi hasil dekripsi.
-- Perbandingan mode.
-- **Ekspor laporan PDF** (berhasil diimplementasikan).
-- Unit test untuk algoritma dan mode.
+## Features
 
-Fitur di atas dianggap selesai setelah benar-benar diimplementasikan dan diuji.
+- **ECB Mode**: Electronic Codebook — each block encrypted independently
+- **CBC Mode**: Cipher Block Chaining with IV and PKCS#7 padding
+- **CTR Mode**: Counter mode without block padding, preserving plaintext length
+- **PDF Report Generation**: Downloadable reports from actual execution data
+- **Dynamic Member Management**: Add/remove group members with name (required) and NIM (optional)
+- **Editable PDF Filename**: Auto-generated from group name/journal title,可编辑 before download
+- **Mode Status Tracking**: BERHASIL / GAGAL / Belum dijalankan
+- **Interactive Visualizer**: Per-block HEX/BIN display and Feistel round traces
+- **Comparison Table**: Side-by-side mode analysis
 
-## Persyaratan
+## Technology Stack
 
-- Python 3.11 atau versi kompatibel.
-- `pip`.
-- Browser modern.
+- **Python** — cipher engine and backend logic
+- **Streamlit** — interactive web interface
+- **ReportLab** — downloadable PDF report generation
+- **Pytest** — automated testing
 
-## Instalasi di Windows PowerShell
+## Project Structure
+
+```text
+CipherLab/
+├ app.py                                         # Main Streamlit application
+├ requirements.txt                               # Project dependencies
+├ README.md                                      # This file
+├ .gitignore                                     # Git ignore rules
+├ pytest.ini                                     # Pytest configuration
+├ cipherlab/                                     # Python package
+│   ├── __init__.py
+│   ├── feistel16.py                             # 16-bit Feistel cipher core
+│   ├── padding.py                               # PKCS#7 padding for 2-byte blocks
+│   ├── encoding.py                              # Text/bytes conversion, HEX/BIN formatting
+│   ├── ecb.py                                   # ECB mode implementation
+│   ├── cbc.py                                   # CBC mode implementation
+│   ├── ctr.py                                   # CTR mode implementation
+│   └── pipeline.py                              # Execution pipeline (encrypt+verify)
+├ tests/                                         # Automated test suite
+│   ├── test_feistel16.py                        # Feistel KAT tests
+│   ├── test_ecb.py                              # ECB tests
+│   ├── test_cbc.py                              # CBC tests
+│   ├── test_ctr.py                              # CTR tests
+│   ├── test_padding.py                          # Padding behavior tests
+│   ├── test_encoding.py                         # Encoding/decoding tests
+│   ├── test_pipeline.py                         # Pipeline execution tests
+│   ├── test_export.py                           # Markdown/CSV export tests
+│   └── test_pdf_report.py                       # PDF report generation tests
+├ reports/                                       # PDF report generator
+│   ├── __init__.py
+│   ├── pdf_report.py                            # ReportLab PDF generator
+│   └── export.py                                # Markdown/CSV export
+├ docs/                                          # Documentation assets
+│   ├── DESIGN-REFERENCE.md
+│   └── REPORT-GUIDE.md
+└ assets/                                        .gitkeep
+```
+
+## Prerequisites
+
+- Python 3.10 or compatible version
+- `pip` package manager
+- Modern web browser
+
+## Installation
 
 ```powershell
-git clone <URL-REPOSITORY-ANDA>
+# 1. Clone the repository
+git clone https://github.com/zann06/Enskripsi-Block-Cipher.git
 cd cipherlab
 
+# 2. Create and activate a virtual environment
 py -m venv .venv
-.\.venv\Scripts\Activate.ps1
+.venv\Scripts\Activate.ps1
 
-python -m pip install --upgrade pip
+# 3. Install dependencies
 pip install -r requirements.txt
 ```
 
-Jika PowerShell memblokir aktivasi virtual environment, gunakan Command Prompt atau periksa kebijakan eksekusi yang berlaku pada perangkatmu. Jangan mengubah kebijakan keamanan komputer kampus tanpa izin.
-
-## Menjalankan aplikasi
+## Running the Application
 
 ```powershell
 streamlit run app.py
 ```
 
-Buka URL lokal yang ditampilkan di terminal, biasanya `http://localhost:8501`.
+Open the URL displayed in the terminal (typically `http://localhost:8501`) in your web browser.
 
-## Menjalankan test
-
-Jika proyek menggunakan pytest:
+## Testing
 
 ```powershell
 python -m pytest -q
 ```
 
-Jangan menyatakan test lulus sebelum perintah tersebut benar-benar berhasil.
+Do not declare tests passing before this command actually succeeds.
 
-## Mode Operasi
+## Operating Modes
 
-- **ECB:** setiap blok diproses secara independen.
-- **CBC:** plaintext di-XOR dengan IV atau ciphertext sebelumnya sebelum enkripsi.
-- **CTR:** plaintext di-XOR dengan keystream yang diperoleh dari enkripsi counter block.
+| Aspect | ECB | CBC | CTR |
+|---|---|---|---|
+| **Encryption formula** | `C_i = E_K(P_i)` | `C_i = E_K(P_i \oplus C_{i-1})` | `C_i = P_i \oplus E_K(T_i)` |
+| **Decryption formula** | `P_i = D_K(C_i)` | `P_i = D_K(C_i) \oplus C_{i-1}` | `P_i = C_i \oplus E_K(T_i)` |
+| **IV / counter** | Not used | IV 16-bit (`C_0 = IV`) | Counter 16-bit, increment +1 |
+| **Padding** | PKCS#7 2 byte | PKCS#7 2 byte | None (length preserved) |
+| **Block dependency** | Independent | Depends on previous block | Through counter/keystream |
+| **Repeated blocks** | Visible in ciphertext | Masked by chaining | Different keystreams |
 
-## Batasan Keamanan
+## Security Disclaimer
 
-Cipher 16-bit edukasional tidak boleh dipakai untuk data sensitif atau produksi. Mode CBC dan CTR tanpa mekanisme autentikasi (MAC/AEAD) tidak menjamin integritas ciphertext. Untuk aplikasi nyata, gunakan pustaka kriptografi teruji dan konstruksi authenticated encryption yang sesuai, bukan implementasi toy cipher ini.
+This 16-bit toy cipher is **strictly for educational purposes only**.
 
-## Struktur Proyek
+- Block and key sizes (16-bit) are too small for real-world security
+- Vulnerable to brute-force attacks (65,536 possible keys)
+- CBC and CTR without authentication (MAC/AEAD) do not guarantee ciphertext integrity
+- **Do not use** this cipher to protect sensitive or production data
 
-```text
-cipherlab/
-├ app.py
-├ crypto/
-│   ├── __init__.py
-│   ├── feistel16.py
-│   ├── ecb.py
-│   ├── cbc.py
-│   ├── ctr.py
-│   ├── padding.py
-│   └── encoding.py
-├ tests/
-│   ├── test_feistel16.py
-│   ├── test_ecb.py
-│   ├── test_cbc.py
-│   ├── test_ctr.py
-│   ├── test_padding.py
-│   ├── test_encoding.py
-│   ├── test_pipeline.py
-│   ├── test_export.py
-│   ├── test_pdf_report.py
-│   └── ref_impl.py
-├ reports/
-│   ├── __init__.py
-│   ├── pdf_report.py
-│   └── export.py
-├ PRD.md
-├ PROMPT.md
-├ README.md
-├ requirements.txt
-└── .gitignore
-```
+For real applications, use authenticated encryption standards such as AES-GCM or ChaCha20-Poly1305.
 
-## Dokumen Pendamping
+## Known Limitations
 
-- `PRD.md` — persyaratan produk dan algoritma.
-- `PROMPT.md` — prompt implementasi untuk OpenCode.
-- `docs/design-reference.png` — referensi visual bila disertikan.
+- 16-bit block size limits the cipher to educational use only
+- No authentication/mac; CBC/CTR modes do not guarantee integrity
+- Small key space (16-bit) makes brute-force feasible
+- Side-channel resistance not implemented
+- The PDF report contains the actual experiment parameters and results, including the test key
 
-## Kontribusi
+## License
 
-Perubahan algoritma harus disertai penjelasan, test independen, dan pembaruan dokumentasi. Jangan mengklaim keamanan kriptografis tanpa analisis dan validasi yang layak.
-
-## Lisensi
-
-Pilih lisensi open-source sebelum publikasi, misalnya MIT, setelah memastikan seluruh dependensi dan aset memiliki lisensi yang sesuai.
-
-## Laporan PDF Otomatis
-
-CipherLab dirancang untuk membuat laporan PDF detail dari hasil eksekusi aktual.
-
-Pada halaman **Reports - Laporan**:
-
-1. Isi identitas kelompok: judul laporan, nama kelompok, mata kuliah, dosen, kelas, tanggal, dan daftar anggota.
-2. Jalankan ECB, CBC, dan CTR di Playground terlebih dahulu.
-3. Periksa status verifikasi dan tabel per blok.
-4. Atur nama file PDF jika diperlukan.
-5. Klik **Unduh Laporan PDF**.
-
-Nama kelompok dan anggota tidak di-hardcode. Nama file otomatis mengikuti nama kelompok/judul, lalu dapat disunting. Mode yang belum dijalankan ditandai jelas di PDF; PDF tidak mengarang hasil.
-
-PDF berisi identitas kelompok, ringkasan, parameter, hasil tiap mode, tabel HEX/BIN per blok, trace yang tersedia, hasil dekripsi, status verifikasi, perbandingan, dan batasan keamanan.
-
-Dependensi PDF: ReportLab. Pembuatan PDF berjalan lokal tanpa API eksternal. Fitur ini dianggap selesai setelah modul dan tombol unduh benar-benar diimplementasikan dan diuji.
-
-### Fitur Halaman Reports
-
-Panel identitas laporan fleksibel:
-
-- **Judul laporan** (wajib)
-- **Nama kelompok** (wajib)
-- **Mata kuliah**
-- **Nama dosen**
-- **Kelas / kelas praktikum**
-- **Daftar anggota** yang dapat ditambah/dihapus; nama wajib, NIM opsional
-- **Tanggal laporan** (default tanggal saat ini, bisa diedit)
-- **Catatan tambahan** (opsional)
-- **Nama file PDF** (otomatis dari nama kelompok/judul, tetapi bisa diedit sebelum unduh)
-
-Daftar anggota dinamis:
-- Tambah baris anggota baru
-- Hapus anggota yang sudah ada
-- Setiap anggota memiliki field nama (wajib) dan NIM (opsional)
-
-Status mode di halaman Reports:
-
-- Mode yang sudah dieksekusi dan verifikasi lolos ditandai "BERHASIL"
-- Mode yang sudah dieksekusi tetapi verifikasi gagal ditandai "GAGAL"
-- Mode yang belum pernah dijalankan ditandai "Belum dijalankan" dengan jelas
-
-Tombol unduh PDF aktif setelah setidaknya satu mode dieksekusi. Untuk laporan tugas yang lengkap, anjurkan ketiga mode (ECB, CBC, CTR) harus dijalankan dan lolos verifikasi.
-
-Isi PDF sesuai hasil eksekusi aktual dari aplikasi, tidak ada data dummy:
-- Cover: judul laporan, nama kelompok, mata kuliah, dosen, kelas, tanggal, daftar anggota
-- Ringkasan eksekusi: cipher inti, block size 16 bit, mode yang dijalankan, status verifikasi
-- Parameter per mode: kunci, IV (CBC) / counter awal (CTR), encoding, padding
-- Tabel per blok: plaintext HEX/BIN, ciphertext HEX/BIN, parameter XOR/counter/keystream per mode
-- Trace perhitungan Feistel per blok (opsional/dapat dilampir)
-- Hasil dekripsi dan status verifikasi per mode
-- Tabel perbandingan mode ECB/CBC/CTR
-- Kesimpulan berdasarkan data eksekusi aktual (tidak dimarag)
-- Batasan dan peringatan keamanan toy cipher 16-bit
+This project is open source. See the repository license for details.
