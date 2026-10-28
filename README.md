@@ -14,30 +14,30 @@
 
 ---
 
-## 📌 Overview
+## Overview
 
 **CipherLab** is an educational tool designed for cryptography coursework. It provides an interactive web interface to explore, execute, and visualize classic block cipher modes (**ECB**, **CBC**, and **CTR**) built on top of a custom 16-bit Feistel network.
 
-> ⚠️ **Important Security Disclaimer:** This is an educational cipher with 16-bit blocks and keys. It is **not** AES and **must not** be used to protect real-world sensitive data.
+> **Important Security Disclaimer:** This is an educational cipher with 16-bit blocks and keys. It is **not** AES and **must not** be used to protect real-world sensitive data.
 
 ---
 
-## ✨ Features
+## Features
 
-- **🔐 3 Operating Modes**:
+- **3 Operating Modes**:
   - **ECB Mode**: Electronic Codebook — independent block encryption with PKCS#7 padding.
   - **CBC Mode**: Cipher Block Chaining — chaining blocks with IV and PKCS#7 padding.
   - **CTR Mode**: Counter Mode — stream-like operation preserving plaintext length without padding.
-- **👁️ Interactive Visualizer**: Per-block HEX/BIN inspection and step-by-step Feistel round traces ($k_1$ through $k_8$).
-- **⚖️ Side-by-Side Comparison**: Direct analysis of formulas, IV/counter, padding, and block dependencies.
-- **📄 Professional PDF Reports**: Generate and download complete execution reports using ReportLab directly from app session state.
-- **👥 Dynamic Group Management**: Add or remove group members with required names and optional NIMs.
-- **🏷️ Customizable Output Filename**: Auto-generated PDF filenames that can be edited before download.
-- **📊 Real-time Status Tracking**: Automatic status badges (`BERHASIL`, `GAGAL`, `Belum dijalankan`) per mode.
+- **Interactive Visualizer**: Per-block HEX/BIN inspection and step-by-step Feistel round traces ($k_1$ through $k_8$).
+- **Side-by-Side Comparison**: Direct analysis of formulas, IV/counter, padding, and block dependencies.
+- **Professional PDF Reports**: Generate and download complete execution reports using ReportLab directly from app session state.
+- **Dynamic Group Management**: Add or remove group members with required names and optional NIMs.
+- **Customizable Output Filename**: Auto-generated PDF filenames that can be edited before download.
+- **Real-time Status Tracking**: Automatic status badges (`BERHASIL`, `GAGAL`, `Belum dijalankan`) per mode.
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
 CipherLab/
@@ -84,7 +84,7 @@ CipherLab/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -122,7 +122,7 @@ python -m pytest -v
 
 ---
 
-## 🖥️ Application Screenshots
+## Application Screenshots
 
 Here is a preview of the CipherLab user interface across its main pages:
 
@@ -164,15 +164,15 @@ Group member management, custom PDF filename editing, and one-click PDF report g
 
 ---
 
-## 📑 Sample PDF Report
+## Sample PDF Report
 
 You can inspect a pre-generated sample PDF report created directly from actual application execution:
 
-- **[📄 Unduh / Lihat Contoh Laporan PDF (docs/contoh-laporan.pdf)](docs/contoh-laporan.pdf)**
+- **[Unduh / Lihat Contoh Laporan PDF (docs/contoh-laporan.pdf)](docs/contoh-laporan.pdf)**
 
 ---
 
-## 📋 Operating Modes Comparison
+## Operating Modes Comparison
 
 | Aspect | ECB (Electronic Codebook) | CBC (Cipher Block Chaining) | CTR (Counter Mode) |
 | :--- | :--- | :--- | :--- |
@@ -185,7 +185,7 @@ You can inspect a pre-generated sample PDF report created directly from actual a
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 - **Python**: Core cryptographic engine and pipeline logic.
 - **Streamlit**: Interactive, dark-themed responsive web UI.
@@ -194,6 +194,6 @@ You can inspect a pre-generated sample PDF report created directly from actual a
 
 ---
 
-## 📜 License
+## License
 
 This project is open-source and available under the [MIT License](LICENSE).
