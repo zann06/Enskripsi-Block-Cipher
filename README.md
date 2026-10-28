@@ -172,6 +172,73 @@ For real applications, use authenticated encryption standards such as AES-GCM or
 - Side-channel resistance not implemented
 - The PDF report contains the actual experiment parameters and results, including the test key
 
+## Screenshots / Demo
+
+The application features a modern, dark-themed Streamlit interface with the following pages:
+
+### Dashboard
+- Overview of the application with cipher information
+- Quick navigation to other pages
+- Cipher intuition metrics and warnings
+
+### Playground
+- Plaintext input field (text area)
+- Key input (HEX 16-bit)
+- Mode selector (ECB, CBC, CTR)
+- Mode-specific configuration:
+  - CBC: IV input (HEX 16-bit)
+  - CTR: Counter awal input (HEX 16-bit)
+- Buttons: Encrypt, Decrypt, Use Example, Clear
+- Results display: ciphertext HEX/BIN, plaintext hasil dekripsi
+- Status: verified BERHASIL/GAGAL or Belum dijalankan
+
+### Visualizer
+- Select mode and executed result from session
+- Block selection dropdown
+- Per-block display: Plaintext HEX/BIN, Ciphertext HEX/BIN
+- Mode-specific parameters (XOR with IV/counter, keystream)
+- Select blok untuk melihat trace ronde Feistel
+- Full trace ronde Feistel display for the selected block
+- Key schedule display (k1 through k8)
+
+### Comparison
+- Side-by-side table of ECB/CBC/CTR characteristics
+- Rumus enkripsi/dekripsi per mode
+- IV/counter and padding comparison
+- Dependensi antarblok analysis
+- Pola blok berulang analysis dari eksekusi aktual
+
+### Reports
+- Panel identitas laporan fleksibel:
+  - Judul laporan (wajib)
+  - Nama kelompok (wajib)
+  - Mata kuliah
+  - Nama dosen
+  - Kelas / kelas praktikum
+  - Daftar anggota (ditambah/dihapus; nama wajib, NIM opsional)
+  - Tanggal laporan (default tanggal saat ini, bisa diedit)
+  - Catatan tambahan (opsional)
+  - Nama file PDF (otomatis dari nama kelompok/judul, bisa diedit)
+- Status pengujian per mode:
+  - BERHASIL (sudah dieksekusi dan verifikasi lolos)
+  - GAGAL (sudah dieksekusi tetapi verifikasi gagal)
+  - Belum dijalankan (bel pernah dieksekusi)
+- Opsi: Sertikan Lampiran trace ronde lengkap (per blok)
+- Tombol Unduh Laporan PDF (menghasilkan file PDF otomatis dari data eksekusi aktual)
+- Ekspor Markdown / CSV
+
+### Arsitektur (Konseptual)
+<img src="docs/DESIGN-REFERENCE.png" alt="Arsitektur Desain CipherLab" width="400"/>
+
+*Gambar di atas merancang visual CipherLab sebagai referensi komposisi UI/UX.*
+
+### Catatan:
+- Screenshot di atas merupakan ilustrasi antarmuka desain CipherLab
+- Screenshot aplikasi yang sedang berjalan dapat di-capture saat `streamlit run app.py` dijalankan di browser
+- Aplikasi memiliki tema navy/vetitabu yang modern dan minimis
+- Semua nilai yang ditampilkan berasal dari eksekusi aktual, bukan data dummy
+- Mode yang belum dijalankan ditandai "Belum dijalankan" dengan jelas
+
 ## License
 
 This project is open source. See the repository license for details.
