@@ -1,328 +1,199 @@
 # CipherLab — 16-bit Block Cipher Laboratory
 
-## Overview
+<div align="center">
 
-CipherLab is an educational web application for learning block cipher operations using a 16-bit Feistel network. The implementation uses Python and Streamlit for the interactive interface, ReportLab for PDF report generation, and Pytest for automated testing.
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-App-ff4b4b.svg)](https://streamlit.io/)
+[![ReportLab](https://img.shields.io/badge/ReportLab-PDF-orange.svg)](https://www.reportlab.com/)
+[![Pytest](https://img.shields.io/badge/Pytest-Passing-green.svg)](https://docs.pytest.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Important:** This is an educational cipher with 16-bit blocks and keys. It is **not** AES and **must not** be used to protect real-sensitive data.
+*An educational web application & laboratory for exploring block cipher operations using a custom 16-bit Feistel network.*
 
-## Features
+</div>
 
-- **ECB Mode**: Electronic Codebook — each block encrypted independently
-- **CBC Mode**: Cipher Block Chaining with IV and PKCS#7 padding
-- **CTR Mode**: Counter mode without block padding, preserving plaintext length
-- **PDF Report Generation**: Downloadable reports from actual execution data
-- **Dynamic Member Management**: Add/remove group members with name (required) and NIM (optional)
-- **Editable PDF Filename**: Auto-generated from group name/journal title,可编辑 before download
-- **Mode Status Tracking**: BERHASIL / GAGAL / Belum dijalankan
-- **Interactive Visualizer**: Per-block HEX/BIN display and Feistel round traces
-- **Comparison Table**: Side-by-side mode analysis
+---
 
-## Technology Stack
+## 📌 Overview
 
-- **Python** — cipher engine and backend logic
-- **Streamlit** — interactive web interface
-- **ReportLab** — downloadable PDF report generation
-- **Pytest** — automated testing
+**CipherLab** is an educational tool designed for cryptography coursework. It provides an interactive web interface to explore, execute, and visualize classic block cipher modes (**ECB**, **CBC**, and **CTR**) built on top of a custom 16-bit Feistel network.
 
-## Project Structure
+> ⚠️ **Important Security Disclaimer:** This is an educational cipher with 16-bit blocks and keys. It is **not** AES and **must not** be used to protect real-world sensitive data.
+
+---
+
+## ✨ Features
+
+- **🔐 3 Operating Modes**:
+  - **ECB Mode**: Electronic Codebook — independent block encryption with PKCS#7 padding.
+  - **CBC Mode**: Cipher Block Chaining — chaining blocks with IV and PKCS#7 padding.
+  - **CTR Mode**: Counter Mode — stream-like operation preserving plaintext length without padding.
+- **👁️ Interactive Visualizer**: Per-block HEX/BIN inspection and step-by-step Feistel round traces ($k_1$ through $k_8$).
+- **⚖️ Side-by-Side Comparison**: Direct analysis of formulas, IV/counter, padding, and block dependencies.
+- **📄 Professional PDF Reports**: Generate and download complete execution reports using ReportLab directly from app session state.
+- **👥 Dynamic Group Management**: Add or remove group members with required names and optional NIMs.
+- **🏷️ Customizable Output Filename**: Auto-generated PDF filenames that can be edited before download.
+- **📊 Real-time Status Tracking**: Automatic status badges (`BERHASIL`, `GAGAL`, `Belum dijalankan`) per mode.
+
+---
+
+## 📂 Project Structure
 
 ```text
 CipherLab/
-├ app.py                                         # Main Streamlit application
-├ requirements.txt                               # Project dependencies
-├ README.md                                      # This file
-├ .gitignore                                     # Git ignore rules
-├ pytest.ini                                     # Pytest configuration
-├ cipherlab/                                     # Python package
+├── app.py                          # Main Streamlit web application
+├── requirements.txt                # Python dependencies
+├── README.md                       # Project documentation
+├── pytest.ini                      # Pytest configuration
+├── crypto/                         # Core cryptography engine
 │   ├── __init__.py
-│   ├── feistel16.py                             # 16-bit Feistel cipher core
-│   ├── padding.py                               # PKCS#7 padding for 2-byte blocks
-│   ├── encoding.py                              # Text/bytes conversion, HEX/BIN formatting
-│   ├── ecb.py                                   # ECB mode implementation
-│   ├── cbc.py                                   # CBC mode implementation
-│   ├── ctr.py                                   # CTR mode implementation
-│   └── pipeline.py                              # Execution pipeline (encrypt+verify)
-├ tests/                                         # Automated test suite
-│   ├── test_feistel16.py                        # Feistel KAT tests
-│   ├── test_ecb.py                              # ECB tests
-│   ├── test_cbc.py                              # CBC tests
-│   ├── test_ctr.py                              # CTR tests
-│   ├── test_padding.py                          # Padding behavior tests
-│   ├── test_encoding.py                         # Encoding/decoding tests
-│   ├── test_pipeline.py                         # Pipeline execution tests
-│   ├── test_export.py                           # Markdown/CSV export tests
-│   └── test_pdf_report.py                       # PDF report generation tests
-├ reports/                                       # PDF report generator
+│   ├── feistel16.py                # 16-bit Feistel cipher core & key schedule
+│   ├── padding.py                  # PKCS#7 padding for 2-byte blocks
+│   ├── encoding.py                 # Text/bytes conversion, HEX/BIN formatting
+│   ├── ecb.py                      # ECB mode implementation
+│   ├── cbc.py                      # CBC mode implementation
+│   ├── ctr.py                      # CTR mode implementation
+│   ├── pipeline.py                 # Execution pipeline (encrypt + verify)
+│   └── results.py                  # Result data structures
+├── reports/                        # PDF generator and exporters
 │   ├── __init__.py
-│   ├── pdf_report.py                            # ReportLab PDF generator
-│   └── export.py                                # Markdown/CSV export
-├ docs/                                          # Documentation assets
-│   ├── DESIGN-REFERENCE.md
-│   └── REPORT-GUIDE.md
-└ assets/                                        .gitkeep
+│   ├── pdf_report.py               # ReportLab PDF generator
+│   └── export.py                   # Markdown / CSV export utilities
+├── tests/                          # Comprehensive automated test suite
+│   ├── test_feistel16.py           # Feistel KAT & round tests
+│   ├── test_ecb.py                 # ECB mode tests
+│   ├── test_cbc.py                 # CBC mode tests
+│   ├── test_ctr.py                 # CTR mode tests
+│   ├── test_padding.py             # Padding behavior tests
+│   ├── test_encoding.py            # Encoding utility tests
+│   ├── test_pipeline.py            # Pipeline verification tests
+│   ├── test_export.py              # Export tests
+│   └── test_pdf_report.py          # PDF generation tests
+└── docs/                           # Documentation and assets
+    ├── DESIGN-REFERENCE.md
+    ├── REPORT-GUIDE.md
+    ├── contoh-laporan.pdf          # Sample generated PDF report
+    └── screenshots/                # Application screenshots
+        ├── dashboard.png
+        ├── playground.png
+        ├── playground-lanjutan.png
+        ├── visualizer.png
+        ├── comparison.png
+        └── reports.png
 ```
 
-## Prerequisites
+---
 
-- Python 3.10 or compatible version
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Python 3.10 or higher
 - `pip` package manager
-- Modern web browser
 
-## Installation
+### Installation
 
 ```powershell
 # 1. Clone the repository
 git clone https://github.com/zann06/Enskripsi-Block-Cipher.git
-cd cipherlab
+cd Enskripsi-Block-Cipher
 
 # 2. Create and activate a virtual environment
-py -m venv .venv
+python -m venv .venv
 .venv\Scripts\Activate.ps1
 
 # 3. Install dependencies
 pip install -r requirements.txt
 ```
 
-## Running the Application
+### Running the Application
 
 ```powershell
 streamlit run app.py
 ```
 
-Open the URL displayed in the terminal (typically `http://localhost:8501`) in your web browser.
+Open the local URL displayed in your terminal (typically `http://localhost:8501`) in your web browser.
 
-## Testing
+### Running Tests
 
 ```powershell
-python -m pytest -q
+python -m pytest -v
 ```
-
-Do not declare tests passing before this command actually succeeds.
-
-## Operating Modes
-
-| Aspect | ECB | CBC | CTR |
-|---|---|---|---|
-| **Encryption formula** | `C_i = E_K(P_i)` | `C_i = E_K(P_i \oplus C_{i-1})` | `C_i = P_i \oplus E_K(T_i)` |
-| **Decryption formula** | `P_i = D_K(C_i)` | `P_i = D_K(C_i) \oplus C_{i-1}` | `P_i = C_i \oplus E_K(T_i)` |
-| **IV / counter** | Not used | IV 16-bit (`C_0 = IV`) | Counter 16-bit, increment +1 |
-| **Padding** | PKCS#7 2 byte | PKCS#7 2 byte | None (length preserved) |
-| **Block dependency** | Independent | Depends on previous block | Through counter/keystream |
-| **Repeated blocks** | Visible in ciphertext | Masked by chaining | Different keystreams |
-
-## Contoh Laporan PDF
-
-Laporan contoh ini dibuat dari eksekusi actual aplikasi CipherLab dan dapat digunakan sebagai referensi visual:
-
-<div align="center">
-
-[<img src="docs/screenshots/reports.png" alt="Preview Laporan PDF" width="300"/>](docs/contoh-laporan.pdf)
-
-</div>
-
-**Unduh Laporan Contoh:**
-[Laporan_CipherLab_contoh-Farid.pdf](docs/contoh-laporan.pdf)
-
-*Catatan: File laporan ini dibuat dari data eksekusi aktual aplikasi dengan mode ECB/CBC/CTR yang berhasil diverifikasi. Setiap nilai, tabel blok, trace, dan status verifikasi diambil dari objek hasil eksekusi yang sama dengan yang ditampilkan pada antarmuka aplikasi. Laporan ini menyertakan disclaimer edukasi bahwa cipher 16-bit hanya untuk tujuan pembelajaran.*
 
 ---
 
-## Screenshots / Demo
+## 🖥️ Application Screenshots
 
-> **Note:** Screenshots must be captured from the actual running application (`streamlit run app.py`). 
-> To add screenshots, run the application, open in browser at `http://localhost:8501`, and capture using 
-> your OS screenshot tool. Save files in `docs/screenshots/`. Then embed them in the relevant sections below.
+Here is a preview of the CipherLab user interface across its main pages:
 
+### 1. Dashboard Page
+Overview of the 16-bit Feistel cipher, quick navigation cards, and live mode execution status checklist.
 <div align="center">
-
-<div align="center">
-
-### Application Preview
-
-<img src="docs/screenshots/dashboard.png" alt="CipherLab Dashboard" width="400"/>
-<br/>
-<i>Dashboard page - overview with cipher information and mode status</i>
-
-<img src="docs/screenshots/playground.png" alt="CipherLab Playground" width="400"/>
-<br/>
-<i>Playground page - plaintext input, key entry, mode selection (ECB/CBC/CTR)</i>
-
-<img src="docs/screenshots/visualizer.png" alt="CipherLab Visualizer" width="400"/>
-<br/>
-<i>Visualizer page - per-block HEX/BIN display and Feistel round traces</i>
-
-<img src="docs/screenshots/comparison.png" alt="CipherLab Comparison" width="400"/>
-<br/>
-<i>Comparison page - side-by-side ECB/CBC/CTR mode analysis</i>
-
-<img src="docs/screenshots/reports.png" alt="CipherLab Reports" width="400"/>
-<br/>
-<i>Reports page - PDF generation, member management, and download workflow</i>
-
+  <img src="docs/screenshots/dashboard.png" alt="Dashboard Preview" width="85%"/>
 </div>
 
-### Screenshot Descriptions
-
-#### Dashboard
-- Overview of the application with cipher information (16-bit Feistel, round count)
-- Quick navigation to other pages
-- Cipher intuition metrics and warnings
-- Mode status checklist showing which modes have been executed
-
-#### Playground
-- Plaintext input field (text area) for entering message to encrypt
-- Key input (HEX 16-bit)
-- Mode selector (ECB, CBC, CTR)
-- Mode-specific configuration:
-  - CBC: IV input (HEX 16-bit)
-  - CTR: Counter awal input (HEX 16-bit)
-- Buttons: Encrypt, Decrypt, Use Example, Clear
-- Results display: ciphertext HEX/BIN, plaintext hasil dekripsi
-- Status: verified BERHASIL/GAGAL or Belum dijalankan
-
-#### Visualizer
-- Select mode and executed result from session
-- Block selection dropdown
-- Per-block display: Plaintext HEX/BIN, Ciphertext HEX/BIN
-- Mode-specific parameters (XOR with IV/counter, keystream)
-- Select blok untuk melihat trace ronde Feistel
-- Full trace ronde Feistel display for the selected block
-- Key schedule display (k1 through k8)
-
-#### Comparison
-- Side-by-side table of ECB/CBC/CTR characteristics
-- Rumus enkripsi/dekripsi per mode
-- IV/counter and padding comparison
-- Dependensi antarblok analysis
-- Pola blok berulang analysis dari eksekusi actual
-
-#### Reports
-- Panel identitas laporan fleksibel:
-  - Judul laporan (wajib)
-  - Nama kelompok (wajib)
-  - Mata kuliah
-  - Nama dosen
-  - Kelas / kelas praktikum
-  - Daftar anggota (ditambah/dihapus; nama wajib, NIM opsional)
-  - Tanggal laporan (default tanggal saat ini, bisa diedit)
-  - Catatan tambahan (opsional)
-  - Nama file PDF (otomatis dari nama kelompok/judul, bisa diedit)
-- Status pengujian per mode:
-  - BERHASIL (sudah dieksekusi dan verifikasi lolos)
-  - GAGAL (sudah dieksekusi tetapi verifikasi gagal)
-  - Belum dijalankan (bel pernah dieksekusi)
-- Opsi: Sertikan Lampiran trace ronde lengkap (per blok)
-- Tombol Unduh Laporan PDF (menghasilkan file PDF otomatis dari data eksekusi aktual)
-- Ekspor Markdown / CSV
-
+### 2. Playground Page (Input & Execution)
+Plaintext input, 16-bit HEX key configuration, mode selection (ECB, CBC, CTR), and cryptographic results.
+<div align="center">
+  <img src="docs/screenshots/playground.png" alt="Playground Preview" width="85%"/>
 </div>
 
-## Operating Modes
+### 3. Playground Lanjutan (Advanced Config & Decryption)
+Advanced parameters such as IV and Initial Counter configuration alongside decryption verification status.
+<div align="center">
+  <img src="docs/screenshots/playground-lanjutan.png" alt="Playground Lanjutan Preview" width="85%"/>
+</div>
 
-### ECB (Electronic Codebook)
-- Each block encrypted independently: `C_i = E_K(P_i)`
-- No IV required
-- Repeated plaintext blocks produce repeated ciphertext blocks (visible pattern)
-- Fastest of the three modes but leaks pattern information
+### 4. Visualizer Page
+Per-block inspection showing HEX/BIN transformations, XOR steps, and complete Feistel round traces ($k_1 - k_8$).
+<div align="center">
+  <img src="docs/screenshots/visualizer.png" alt="Visualizer Preview" width="85%"/>
+</div>
 
-### CBC (Cipher Block Chaining)
-- Each block XORed with previous ciphertext before encryption: `C_i = E_K(P_i \oplus C_{i-1})`
-- Requires IV as `C_0`
-- Repeated plaintext blocks produce different ciphertext due to chaining
-- PKCS#7 padding applied (2-byte blocks)
+### 5. Comparison Page
+Side-by-side analytical comparison table detailing formulas, padding, IV usage, and block dependency behaviors.
+<div align="center">
+  <img src="docs/screenshots/comparison.png" alt="Comparison Preview" width="85%"/>
+</div>
 
-### CTR (Counter)
-- Each block XORed with keystream from encrypted counter: `C_i = P_i \oplus E_K(T_i)`
-- Counter increments by +1 per block, no padding
-- Plaintext length preserved exactly
-- Counter must not overflow past 0xFFFF
+### 6. Reports Page
+Group member management, custom PDF filename editing, and one-click PDF report generation.
+<div align="center">
+  <img src="docs/screenshots/reports.png" alt="Reports Preview" width="85%"/>
+</div>
 
-## Security Disclaimer
+---
 
-This 16-bit toy cipher is **strictly for educational purposes only**.
+## 📑 Sample PDF Report
 
-- Block and key sizes (16-bit) are too small for real-world security
-- Vulnerable to brute-force attacks (65,536 possible keys)
-- CBC and CTR without authentication (MAC/AEAD) do not guarantee ciphertext integrity
-- **Do not use** this cipher to protect sensitive or production data
+You can inspect a pre-generated sample PDF report created directly from actual application execution:
 
-For real applications, use authenticated encryption standards such as AES-GCM or ChaCha20-Poly1305.
+- **[📄 Unduh / Lihat Contoh Laporan PDF (docs/contoh-laporan.pdf)](docs/contoh-laporan.pdf)**
 
-## Known Limitations
+---
 
-- 16-bit block size limits the cipher to educational use only
-- No authentication/mac; CBC/CTR modes do not guarantee integrity
-- Small key space (16-bit) makes brute-force feasible
-- Side-channel resistance not implemented
-- The PDF report contains the actual experiment parameters and results, including the test key
+## 📋 Operating Modes Comparison
 
-## Screenshots / Demo
+| Aspect | ECB (Electronic Codebook) | CBC (Cipher Block Chaining) | CTR (Counter Mode) |
+| :--- | :--- | :--- | :--- |
+| **Encryption Formula** | $C_i = E_K(P_i)$ | $C_i = E_K(P_i \oplus C_{i-1})$ | $C_i = P_i \oplus E_K(T_i)$ |
+| **Decryption Formula** | $P_i = D_K(C_i)$ | $P_i = D_K(C_i) \oplus C_{i-1}$ | $P_i = C_i \oplus E_K(T_i)$ |
+| **IV / Counter** | Not required | 16-bit IV ($C_0 = \text{IV}$) | 16-bit Counter (increment +1) |
+| **Padding** | PKCS#7 (2-byte blocks) | PKCS#7 (2-byte blocks) | None (Preserves length) |
+| **Block Dependency** | Independent blocks | Chained with previous ciphertext | Keystream via counter |
+| **Pattern Leakage** | Visible in repeated blocks | Masked by chaining | Masked by keystream |
 
-The application features a modern, dark-themed Streamlit interface with the following pages:
+---
 
-### Dashboard
-- Overview of the application with cipher information
-- Quick navigation to other pages
-- Cipher intuition metrics and warnings
+## 🛠️ Technology Stack
 
-### Playground
-- Plaintext input field (text area)
-- Key input (HEX 16-bit)
-- Mode selector (ECB, CBC, CTR)
-- Mode-specific configuration:
-  - CBC: IV input (HEX 16-bit)
-  - CTR: Counter awal input (HEX 16-bit)
-- Buttons: Encrypt, Decrypt, Use Example, Clear
-- Results display: ciphertext HEX/BIN, plaintext hasil dekripsi
-- Status: verified BERHASIL/GAGAL or Belum dijalankan
+- **Python**: Core cryptographic engine and pipeline logic.
+- **Streamlit**: Interactive, dark-themed responsive web UI.
+- **ReportLab**: Professional programmatic PDF generation.
+- **Pytest**: Rigorous automated test suite covering KATs and edge cases.
 
-### Visualizer
-- Select mode and executed result from session
-- Block selection dropdown
-- Per-block display: Plaintext HEX/BIN, Ciphertext HEX/BIN
-- Mode-specific parameters (XOR with IV/counter, keystream)
-- Select blok untuk melihat trace ronde Feistel
-- Full trace ronde Feistel display for the selected block
-- Key schedule display (k1 through k8)
+---
 
-### Comparison
-- Side-by-side table of ECB/CBC/CTR characteristics
-- Rumus enkripsi/dekripsi per mode
-- IV/counter and padding comparison
-- Dependensi antarblok analysis
-- Pola blok berulang analysis dari eksekusi aktual
+## 📜 License
 
-### Reports
-- Panel identitas laporan fleksibel:
-  - Judul laporan (wajib)
-  - Nama kelompok (wajib)
-  - Mata kuliah
-  - Nama dosen
-  - Kelas / kelas praktikum
-  - Daftar anggota (ditambah/dihapus; nama wajib, NIM opsional)
-  - Tanggal laporan (default tanggal saat ini, bisa diedit)
-  - Catatan tambahan (opsional)
-  - Nama file PDF (otomatis dari nama kelompok/judul, bisa diedit)
-- Status pengujian per mode:
-  - BERHASIL (sudah dieksekusi dan verifikasi lolos)
-  - GAGAL (sudah dieksekusi tetapi verifikasi gagal)
-  - Belum dijalankan (bel pernah dieksekusi)
-- Opsi: Sertikan Lampiran trace ronde lengkap (per blok)
-- Tombol Unduh Laporan PDF (menghasilkan file PDF otomatis dari data eksekusi aktual)
-- Ekspor Markdown / CSV
-
-### Arsitektur (Konseptual)
-<img src="docs/DESIGN-REFERENCE.png" alt="Arsitektur Desain CipherLab" width="400"/>
-
-*Gambar di atas merancang visual CipherLab sebagai referensi komposisi UI/UX.*
-
-### Catatan:
-- Screenshot di atas menunjukkan antarmuka CipherLab yang sebenarnya saat dijalankan via `streamlit run app.py`
-- Screenshot dapat di-capture saat aplikasi berjalan di browser di `http://localhost:8501`
-- Aplikasi memiliki tema navy/vetitabu yang modern dan minimis
-- Semua nilai yang ditampilkan berasal dari eksekusi aktual, bukan data dummy
-- Mode yang belum dijalankan ditandai "Belum dijalankan" dengan jelas
-- Gambar di atas digunakan sebagai referensi; screenshot aktual disimpan di `docs/screenshots/`## License
-
-This project is open source. See the repository license for details.
+This project is open-source and available under the [MIT License](LICENSE).
