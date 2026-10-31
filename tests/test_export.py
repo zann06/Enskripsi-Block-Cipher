@@ -23,7 +23,7 @@ def test_markdown_contains_actual_data():
     md = results_to_markdown(results)
     for result in results.values():
         assert f"## Mode {result.mode}" in md
-        assert f"**Status verifikasi: {result.status}**" in md
+        assert f"Status verifikasi: **{result.status}**" in md
         for block in result.blocks:
             assert f"`{block.ciphertext_block.hex(' ').upper()}`" in md
     assert "0x0F0F" in md and "0x00C8" in md and "0x1A2B" in md

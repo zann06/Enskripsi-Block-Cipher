@@ -41,11 +41,11 @@ def test_cbc_known_answer_from_independent_reference():
     for offset, block in enumerate(blocks):
         assert block.index == offset
         assert block.counter_block is None
+        assert block.feistel_output == block.ciphertext_block
         if offset == 0:
             assert block.xor_value == IV.to_bytes(BLOCK, "big")
         else:
             assert block.xor_value == blocks[offset - 1].ciphertext_block
-        assert block.feistel_input == block.ciphertext_block  # sebelum enkripsi sama
     # feistel_input blok ke-i = P_i XOR C_(i-1)
     for block in blocks:
         assert (
@@ -68,17 +68,26 @@ def test_cbc_same_plaintext_different_iv_changes_ciphertext():
 
 
 def test_cbc_chaining_makes_repeated_blocks_differ():
-    """Blok plaintext identik biasanya menghasilkan ciphertext berbeda (chaining)."""
+    """Blok plaintext identik menghasilkan ciphertext berbeda karena chaining.
+
+    4 blok plaintext identik + 1 blok padding = 5 blok; input Feistel setiap
+    blok berbeda (P XOR C_i-1) dan cipher adalah permutasi, sehingga kelima
+    ciphertext berbeda semua.
+    """
     plaintext = b"\x41\x42" * 4
     ciphertext, blocks = encrypt_cbc(plaintext, KEY, IV)
-    assert len({block.ciphertext_block for block in blocks}) == 4
+    assert len(blocks) == 5
+    assert len({block.ciphertext_block for block in blocks}) == 5
 
 
 def test_cbc_wrong_iv_corrupts_first_block_only():
+    """IV salah merusak blok pertama; blok berikutnya tetap terdekripsi benar."""
     plaintext = "Halo dunia!".encode("utf-8")
     ciphertext, _ = encrypt_cbc(plaintext, KEY, 0x0F0F)
-    with pytest.raises(Exception):
-        decrypt_cbc(ciphertext, KEY, 0x0F0E)
+    corrupted = decrypt_cbc(ciphertext, KEY, 0x0F0E)
+    assert corrupted != plaintext
+    assert corrupted[:2] != plaintext[:2]      # blok pertama rusak
+    assert corrupted[2:] == plaintext[2:]      # blok berikutnya benar (chaining dari ciphertext)
 
 
 @pytest.mark.parametrize("bad_iv", [-1, 0x10000, True])

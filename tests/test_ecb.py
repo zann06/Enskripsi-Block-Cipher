@@ -48,11 +48,17 @@ def test_ecb_empty_input_produces_one_padding_block():
 
 
 def test_ecb_identical_blocks_produce_identical_ciphertext():
-    """Karakteristik ECB, diverifikasi dari output aktual."""
+    """Karakteristik ECB, diverifikasi dari output aktual.
+
+    Input 4 blok identik + PKCS#7 menambah 1 blok padding penuh, sehingga
+    total 5 blok: 4 ciphertext identik + 1 blok padding.
+    """
     plaintext = b"\x41\x42" * 4  # 4 blok identik
     ciphertext, blocks = encrypt_ecb(plaintext, KEY)
-    assert len({block.ciphertext_block for block in blocks}) == 1
-    assert ciphertext == bytes(4 * blocks[0].ciphertext_block)
+    assert len(blocks) == 5
+    assert len({block.ciphertext_block for block in blocks[:4]}) == 1
+    assert ciphertext[:8] == blocks[0].ciphertext_block * 4
+    assert blocks[4].plaintext_block == b"\x02\x02"  # blok padding
 
 
 def test_ecb_collect_trace_false():

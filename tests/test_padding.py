@@ -37,8 +37,8 @@ def test_odd_input_gets_one_pad_byte():
         b"\x41\x42\x43",          # 3 byte, bukan kelipatan 2
         b"\x41\x00",              # nilai padding 0
         b"\x41\x03",              # nilai padding melebihi ukuran blok
-        b"\x41\x02\x42\x01",      # byte padding tidak konsisten
-        b"\x02\x01\x02\x01",      # pola inkonsisten lain
+        b"\x41\x01\x42\x02",      # byte padding tidak konsisten
+        b"\x02\x01\x01\x02",      # pola inkonsisten lain
     ],
 )
 def test_unpad_invalid_raises(data):

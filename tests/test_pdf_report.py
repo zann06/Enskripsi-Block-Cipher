@@ -6,6 +6,7 @@ verifikasi GAGAL tidak pernah ditulis sebagai keberhasilan, metadata kelompok
 dan nama file tampil sesuai input pengguna.
 """
 
+import copy
 import re
 import sys
 from datetime import datetime, timezone
@@ -61,11 +62,24 @@ def metadata():
     )
 
 
+_FOOTER_SENTENCE = (
+    "CipherLab-laporandibuatlokaldenganReportLab;toycipher16-bit,bukanuntukdatanyata."
+)
+
+
 def _norm(pdf_bytes: bytes) -> tuple[str, int]:
-    """Ekstrak teks PDF dan buang semua whitespace agar assert stabil."""
+    """Ekstrak teks PDF, buang whitespace dan artefak header/footer halaman.
+
+    Footer dicopot agar kalimat yang terpotong pindah halaman tetap
+    terbaca utuh setelah penggabungan antar halaman.
+    """
     reader = PdfReader(BytesIO(pdf_bytes))
     text = "".join(page.extract_text() or "" for page in reader.pages)
-    return re.sub(r"\s+", "", text), len(reader.pages)
+    norm = re.sub(r"\s+", "", text)
+    norm = norm.replace(_FOOTER_SENTENCE, "")
+    norm = re.sub(r"Dibuat\d{2}/\d{2}/\d{4}\d{2}:\d{2}:\d{2}", "", norm)
+    norm = re.sub(r"Halaman\d+", "", norm)
+    return norm, len(reader.pages)
 
 
 def test_pdf_contains_actual_ecb_data(metadata, ecb_result):
@@ -119,16 +133,19 @@ def test_pdf_empty_session_marks_all_modes(metadata):
 
 
 def test_pdf_failed_verification_is_reported_as_gagal(metadata, ecb_result):
-    wrong = redecrypt_result(ecb_result, key=0x00FF)
+    """Kunci salah harus tampil GAGAL di PDF; fixture asli tidak boleh berubah."""
+    snapshot_verified = ecb_result.verified
+    wrong = redecrypt_result(copy.deepcopy(ecb_result), key=0x00FF)
     assert wrong.verified is False
 
     pdf = build_pdf_bytes(metadata, {"ECB": wrong})
     norm, _ = _norm(pdf)
     assert "GAGAL" in norm
     assert "Round-tripECBGAGAL" in norm
-    assert "berhasilantidapatdiberikan" in norm
+    assert "berhasilantidakdapatdiberikan" in norm
     # frasa keberhasilan tidak boleh muncul untuk mode gagal
     assert "identikbyte-per-byte" not in norm
+    assert ecb_result.verified == snapshot_verified  # fixture tidak termutasi
 
 
 def test_pdf_accepts_single_result(metadata, ecb_result):
@@ -141,7 +158,8 @@ def test_pdf_generated_timestamp(metadata, ecb_result):
     stamp = datetime(2026, 10, 28, 14, 0, 0, tzinfo=timezone.utc)
     pdf = build_pdf_bytes(metadata, {"ECB": ecb_result}, generated_at=stamp)
     norm, _ = _norm(pdf)
-    assert "Dibuat28/10/202614:00:00UTC" in norm
+    # timestamp tampil pada tabel ringkasan (dengan zona waktu)
+    assert "Waktulaporandibuat28/10/202614:00:00UTC" in norm
 
 
 def test_pdf_unicode_and_special_characters(metadata):
@@ -198,7 +216,6 @@ def test_build_findings_all_verified(ecb_result, cbc_result, ctr_result):
 
 @pytest.mark.parametrize("raw,expected", [
     ("Kelompok 3", "Kelompok_3"),
-    ('a<b>:"/\\|?*c', "a_c"),
     ("  spasi  ganda  ", "spasi_ganda"),
     ("..", "Laporan_CipherLab"),
     ("", "Laporan_CipherLab"),
@@ -210,6 +227,11 @@ def test_build_findings_all_verified(ecb_result, cbc_result, ctr_result):
 ])
 def test_sanitize_filename(raw, expected):
     assert sanitize_filename(raw) == expected
+
+
+def test_sanitize_filename_replaces_each_unsafe_char():
+    # setiap karakter tidak aman menjadi '_', lalu di-collapse
+    assert sanitize_filename('a<b>:"/\\|?*c') == "a_b_c"
 
 
 def test_sanitize_filename_length_limit():

@@ -302,11 +302,15 @@ def _styles() -> dict:
         ),
         "h1": ParagraphStyle(
             "h1", fontName=f["bold"], fontSize=13.5, leading=17,
-            textColor=NAVY, spaceBefore=16, spaceAfter=6,
+            textColor=NAVY, spaceBefore=16, spaceAfter=4, keepWithNext=1,
+        ),
+        "h1x": ParagraphStyle(
+            "h1x", fontName=f["bold"], fontSize=13.5, leading=17,
+            textColor=NAVY, spaceBefore=16, spaceAfter=4, keepWithNext=1,
         ),
         "h2": ParagraphStyle(
             "h2", fontName=f["bold"], fontSize=11, leading=14,
-            textColor=VIOLET_DARK, spaceBefore=10, spaceAfter=4,
+            textColor=VIOLET_DARK, spaceBefore=10, spaceAfter=4, keepWithNext=1,
         ),
         "body": ParagraphStyle(
             "body", fontSize=9.8, leading=13.5, textColor=TEXT, spaceAfter=4,
@@ -333,6 +337,19 @@ def _styles() -> dict:
             fontName=f["regular"], alignment=TA_CENTER,
         ),
     }
+
+
+def _h1(story: list, styles: dict, text: str, register_toc: bool = True) -> None:
+    """Judul bagian: paragraf bergaya ``h1`` + garis aksen violet di bawahnya.
+
+    ``register_toc=False`` memakai gaya ``h1x`` sehingga tidak masuk Daftar Isi.
+    """
+    from reportlab.platypus import HRFlowable, Paragraph
+
+    story.append(Paragraph(esc(text), styles["h1" if register_toc else "h1x"]))
+    rule = HRFlowable(width="100%", thickness=1.1, color=VIOLET, spaceBefore=0, spaceAfter=8)
+    rule.keepWithNext = 1  # garis aksen menempel pada konten setelahnya
+    story.append(rule)
 
 
 def _base_table_style() -> list[tuple]:
@@ -529,15 +546,23 @@ def build_findings(result_map: dict[str, ModeResult]) -> list[str]:
 
 
 def _cover(story: list, styles: dict, metadata: ReportMetadata, generated_at: datetime) -> None:
-    from reportlab.platypus import PageBreak, Paragraph, Table
+    from reportlab.platypus import HRFlowable, PageBreak, Paragraph, Table
 
-    story.append(_spacer(56))
+    story.append(_spacer(40))
+    story.append(
+        Paragraph(
+            f"CipherLab - Educational Project - Block {BLOCK_BITS} bit",
+            styles["subtitle"],
+        )
+    )
+    story.append(_spacer(6))
+    story.append(HRFlowable(width="30%", thickness=2.2, color=VIOLET, spaceAfter=18, hAlign="CENTER"))
     story.append(Paragraph(esc(metadata.title), styles["title"]))
     story.append(_spacer(8))
     story.append(
-        Paragraph("CipherLab - Block Cipher 16-bit (ECB, CBC, CTR) untuk Edukasi", styles["subtitle"])
+        Paragraph("Eksekusi Block Cipher 16-bit pada Mode ECB, CBC, dan CTR", styles["subtitle"])
     )
-    story.append(_spacer(26))
+    story.append(_spacer(30))
 
     rows: list[list[str]] = []
     rows.append(["Kelompok", esc(metadata.group_name)])
@@ -551,17 +576,18 @@ def _cover(story: list, styles: dict, metadata: ReportMetadata, generated_at: da
         rows.append(["Tanggal Laporan", esc(metadata.report_date)])
     meta_table = Table(
         [[Paragraph(f"<b>{label}</b>", styles["cell"]), Paragraph(value, styles["cell"])] for label, value in rows],
-        colWidths=[110, None],
+        colWidths=[120, None],
         style=[
             ("GRID", (0, 0), (-1, -1), 0.4, BORDER),
             ("BACKGROUND", (0, 0), (0, -1), ZEBRA),
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
-            ("TOPPADDING", (0, 0), (-1, -1), 4),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ("TOPPADDING", (0, 0), (-1, -1), 5),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+            ("LEFTPADDING", (0, 0), (-1, -1), 8),
         ],
     )
     story.append(meta_table)
-    story.append(_spacer(18))
+    story.append(_spacer(20))
 
     members = _clean_members(metadata)
     if members:
@@ -607,10 +633,31 @@ def _cover(story: list, styles: dict, metadata: ReportMetadata, generated_at: da
     story.append(PageBreak())
 
 
+def _toc_section(story: list, styles: dict) -> None:
+    """Daftar Isi berbasis nomor halaman aktual (multiBuild)."""
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.platypus import PageBreak
+    from reportlab.platypus.tableofcontents import TableOfContents
+
+    _h1(story, styles, "Daftar Isi", register_toc=False)
+    f = _get_fonts()
+    toc = TableOfContents(
+        levelStyles=[
+            ParagraphStyle(
+                "toc0", fontName=f["regular"], fontSize=10, leading=16,
+                textColor=TEXT, leftIndent=6,
+            )
+        ],
+        dotsMinLevel=0,
+    )
+    story.append(toc)
+    story.append(PageBreak())
+
+
 def _summary_section(story: list, styles: dict, result_map: dict[str, ModeResult], generated_at: datetime) -> None:
     from reportlab.platypus import Paragraph, Table
 
-    story.append(Paragraph("1. Ringkasan Eksekusi", styles["h1"]))
+    _h1(story, styles, "1. Ringkasan Eksekusi")
     executed = [mode for mode in SUPPORTED_MODES if mode in result_map]
     verified = [mode for mode in executed if result_map[mode].verified]
     story.append(
@@ -684,7 +731,7 @@ def _summary_section(story: list, styles: dict, result_map: dict[str, ModeResult
 def _purpose_section(story: list, styles: dict, result_map: dict[str, ModeResult]) -> None:
     from reportlab.platypus import Paragraph
 
-    story.append(Paragraph("2. Tujuan dan Ruang Lingkup", styles["h1"]))
+    _h1(story, styles, "2. Tujuan dan Ruang Lingkup")
     story.append(
         Paragraph(
             esc(
@@ -712,7 +759,7 @@ def _purpose_section(story: list, styles: dict, result_map: dict[str, ModeResult
 def _algorithm_section(story: list, styles: dict) -> None:
     from reportlab.platypus import Paragraph
 
-    story.append(Paragraph("3. Algoritma dan Rumus Mode", styles["h1"]))
+    _h1(story, styles, "3. Algoritma dan Rumus Mode")
     story.append(
         Paragraph(
             esc(
@@ -736,7 +783,7 @@ def _algorithm_section(story: list, styles: dict) -> None:
          "Chaining: tiap blok ciphertext bergantung pada blok sebelumnya."),
         ("CTR", "S<sub>i</sub> = E<sub>K</sub>(T<sub>i</sub>); C<sub>i</sub> = P<sub>i</sub> XOR S<sub>i</sub>",
          "P<sub>i</sub> = C<sub>i</sub> XOR S<sub>i</sub>",
-         "T<sub>i</sub> = counter awal + i (tanpa wrap melewati 0xFFFF); tanpa padding."),
+         "T_i = counter awal + i, increment +1 tanpa wrap melewati 0xFFFF; tanpa padding."),
     ]
     head = [Paragraph(esc(t), styles["cell_head"]) for t in ["Mode", "Enkripsi", "Dekripsi", "Catatan"]]
     rows = [head]
@@ -768,7 +815,7 @@ def _mode_section(story: list, styles: dict, mode: str, result: ModeResult | Non
     from reportlab.platypus import Paragraph, Table
 
     section_number = {"ECB": 4, "CBC": 5, "CTR": 6}[mode]
-    story.append(Paragraph(f"{section_number}. Mode {mode}", styles["h1"]))
+    _h1(story, styles, f"{section_number}. Mode {mode}")
 
     if result is None:
         _callout(
@@ -869,6 +916,16 @@ def _mode_section(story: list, styles: dict, mode: str, result: ModeResult | Non
             )
         )
 
+    story.append(Paragraph("Ciphertext lengkap (HEX)", styles["h2"]))
+    story.append(
+        Paragraph(
+            f'<font face="Courier" size="8">{esc(format_hex(result.ciphertext))}</font>'
+            if result.ciphertext
+            else "(kosong - tidak ada blok yang dienkripsi)",
+            styles["body"],
+        )
+    )
+
     story.append(Paragraph("Tabel blok", styles["h2"]))
     if not result.blocks:
         story.append(
@@ -906,13 +963,13 @@ def _block_table(styles: dict, mode: str, result: ModeResult):
     headers = ["Blok", "Plaintext HEX", "Plaintext BIN"]
     if mode == "ECB":
         headers += ["Ciphertext HEX", "Ciphertext BIN"]
-        widths = [30, 62, 118, 62, 118]
+        widths = [38, 62, 116, 62, 116]
     elif mode == "CBC":
         headers += ["XOR dgn (IV/C prev)", "Input Feistel", "Ciphertext HEX", "Ciphertext BIN"]
-        widths = [26, 56, 84, 56, 56, 56, 84]
+        widths = [34, 56, 82, 56, 56, 56, 82]
     else:  # CTR
         headers += ["Counter", "Keystream", "Ciphertext HEX", "Ciphertext BIN"]
-        widths = [26, 56, 84, 48, 56, 56, 84]
+        widths = [34, 56, 82, 50, 56, 56, 82]
 
     rows = [[Paragraph(esc(h), styles["cell_head"]) for h in headers]]
     for block in result.blocks:
@@ -965,14 +1022,14 @@ def _round_trace_table(styles: dict, rounds: list):
                 Paragraph(f"{trace.right_out:02X}", styles["cell_mono"]),
             ]
         )
-    widths = [34, 44, 44, 44, 44, 44, 44]
+    widths = [44, 46, 46, 46, 46, 46, 46]
     return Table(rows, colWidths=widths, repeatRows=1, style=_base_table_style())
 
 
 def _comparison_section(story: list, styles: dict, result_map: dict[str, ModeResult]) -> None:
     from reportlab.platypus import Paragraph, Table
 
-    story.append(Paragraph("7. Perbandingan Mode", styles["h1"]))
+    _h1(story, styles, "7. Perbandingan Mode")
 
     def cell(mode: str, text: str, mono: bool = False, markup: str | None = None) -> Paragraph:
         if markup is not None:
@@ -1069,7 +1126,7 @@ def _conclusion_section(story: list, styles: dict, result_map: dict[str, ModeRes
                         metadata: ReportMetadata) -> None:
     from reportlab.platypus import Paragraph
 
-    story.append(Paragraph("8. Analisis dan Kesimpulan", styles["h1"]))
+    _h1(story, styles, "8. Analisis dan Kesimpulan")
     story.append(
         Paragraph(
             esc(
@@ -1089,7 +1146,7 @@ def _conclusion_section(story: list, styles: dict, result_map: dict[str, ModeRes
 def _limitations_section(story: list, styles: dict) -> None:
     from reportlab.platypus import Paragraph
 
-    story.append(Paragraph("9. Batasan dan Peringatan Keamanan", styles["h1"]))
+    _h1(story, styles, "9. Batasan dan Peringatan Keamanan")
     limitations = [
         "Toy Feistel 16-bit hanya alat pembelajaran: blok dan kunci 16 bit terlalu kecil dan "
         "sangat rentan brute force. Algoritma ini bukan AES dan tidak boleh dipakai untuk data nyata.",
@@ -1109,7 +1166,7 @@ def _appendix(story: list, styles: dict, result_map: dict[str, ModeResult]) -> N
     from reportlab.platypus import PageBreak, Paragraph
 
     story.append(PageBreak())
-    story.append(Paragraph("Lampiran A. Trace Ronde Feistel Lengkap (Enkripsi)", styles["h1"]))
+    _h1(story, styles, "Lampiran A. Trace Ronde Feistel Lengkap (Enkripsi)")
     traced_modes = [m for m in SUPPORTED_MODES if m in result_map and any(b.feistel_rounds for b in result_map[m].blocks)]
     if not traced_modes:
         story.append(
@@ -1127,7 +1184,7 @@ def _appendix(story: list, styles: dict, result_map: dict[str, ModeResult]) -> N
             story.append(_round_trace_table(styles, block.feistel_rounds))
             story.append(_spacer(6))
 
-    story.append(Paragraph("Lampiran B. Jadwal Kunci (Key Schedule)", styles["h1"]))
+    _h1(story, styles, "Lampiran B. Jadwal Kunci (Key Schedule)")
     seen_keys: dict[int, tuple[int, ...]] = {}
     for mode in SUPPORTED_MODES:
         result = result_map.get(mode)
@@ -1180,7 +1237,7 @@ def build_pdf_bytes(
     try:
         from reportlab.lib import colors
         from reportlab.lib.pagesizes import A4
-        from reportlab.platypus import SimpleDocTemplate
+        from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate
     except ImportError as exc:  # pragma: no cover - jalur tanpa reportlab
         raise ReportLabMissingError() from exc
 
@@ -1205,14 +1262,28 @@ def build_pdf_bytes(
         if with_number:
             stamp = f"{stamp} - Halaman {canvas.getPageNumber()}"
         canvas.drawRightString(width - doc.leftMargin, 27, stamp)
+        if with_number:
+            # header berjalan di atas konten untuk halaman selain cover
+            canvas.setFont(fonts["italic"], 7.2)
+            canvas.drawString(doc.leftMargin, height - 30, "CipherLab - Laporan Block Cipher 16-bit")
+            canvas.setStrokeColor(colors.HexColor(BORDER))
+            canvas.line(doc.leftMargin, height - 36, width - doc.leftMargin, height - 36)
         canvas.restoreState()
 
-    doc = SimpleDocTemplate(
+    class _ReportDoc(SimpleDocTemplate):
+        """SimpleDocTemplate yang memberi tahu Daftar Isi tiap judul h1."""
+
+        def afterFlowable(self, flowable) -> None:
+            if isinstance(flowable, Paragraph) and getattr(flowable.style, "name", "") == "h1":
+                plain = flowable.getPlainText()
+                self.notify("TOCEntry", (0, plain, self.page))
+
+    doc = _ReportDoc(
         buffer,
         pagesize=A4,
         leftMargin=45,
         rightMargin=45,
-        topMargin=48,
+        topMargin=56,
         bottomMargin=52,
         title=metadata.title.strip() or "Laporan CipherLab",
         author=metadata.group_name.strip() or "CipherLab",
@@ -1221,18 +1292,21 @@ def build_pdf_bytes(
 
     story: list = []
     _cover(story, styles, metadata, generated_at)
+    _toc_section(story, styles)
     _summary_section(story, styles, result_map, generated_at)
     _purpose_section(story, styles, result_map)
     _algorithm_section(story, styles)
+    story.append(PageBreak())  # bagian hasil: satu halaman baru
     for mode in SUPPORTED_MODES:
         _mode_section(story, styles, mode, result_map.get(mode), include_traces)
+    story.append(PageBreak())  # bagian sintesis
     _comparison_section(story, styles, result_map)
     _conclusion_section(story, styles, result_map, metadata)
     _limitations_section(story, styles)
     if include_traces:
         _appendix(story, styles, result_map)
 
-    doc.build(
+    doc.multiBuild(
         story,
         onFirstPage=lambda canvas, doc_: _footer(canvas, doc_, with_number=False),
         onLaterPages=lambda canvas, doc_: _footer(canvas, doc_, with_number=True),

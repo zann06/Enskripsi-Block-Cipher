@@ -99,6 +99,20 @@ def _mark_filename_edited() -> None:
     st.session_state["pdf_filename_edited"] = True
 
 
+def _fill_example() -> None:
+    """Callback Use Example: dijalankan sebelum widget dibuat ulang pada rerun."""
+    st.session_state["pg_plaintext"] = EXAMPLE_PLAINTEXT
+    st.session_state["pg_key"] = EXAMPLE_KEY
+    st.session_state["pg_iv"] = EXAMPLE_IV
+    st.session_state["pg_counter"] = EXAMPLE_COUNTER
+
+
+def _clear_playground() -> None:
+    """Callback Clear: kosongkan seluruh input form Playground."""
+    for key in ("pg_plaintext", "pg_key", "pg_iv", "pg_counter"):
+        st.session_state.pop(key, None)
+
+
 def get_members() -> list[Member]:
     """Baca baris anggota dari widget menjadi daftar Member tervalidasi ringan."""
     members: list[Member] = []
@@ -239,20 +253,12 @@ def page_playground() -> None:
     col_enc, col_dec, col_ex, col_clear = st.columns([1.2, 1.2, 1.2, 0.8])
     do_encrypt = col_enc.button("Encrypt", type="primary", use_container_width=True)
     do_decrypt = col_dec.button("Decrypt", use_container_width=True)
-    do_example = col_ex.button("Use Example", use_container_width=True)
-    do_clear = col_clear.button("Clear", use_container_width=True)
-
-    if do_example:
-        st.session_state["pg_plaintext"] = EXAMPLE_PLAINTEXT
-        st.session_state["pg_key"] = EXAMPLE_KEY
-        st.session_state["pg_iv"] = EXAMPLE_IV
-        st.session_state["pg_counter"] = EXAMPLE_COUNTER
-        st.rerun()
-
-    if do_clear:
-        for key in ("pg_plaintext", "pg_key", "pg_iv", "pg_counter"):
-            st.session_state.pop(key, None)
-        st.rerun()
+    # Use Example/Clear memakai on_click callback agar perubahan session_state
+    # kunci widget terjadi SEBELUM widget dibuat ulang pada rerun berikutnya;
+    # mengubahnya langsung setelah widget dibuat memicu
+    # StreamlitWidgetAlreadyInstantiatedError.
+    do_example = col_ex.button("Use Example", on_click=_fill_example, use_container_width=True)
+    do_clear = col_clear.button("Clear", on_click=_clear_playground, use_container_width=True)
 
     results: dict[str, ModeResult] = st.session_state["results"]
 

@@ -87,7 +87,7 @@ def test_counter_overflow_boundary(counter, blocks_used, overflow):
 
 def test_counter_overflow_message_mentions_limit():
     with pytest.raises(CounterOverflowError, match="0xFFFF"):
-        encrypt_ctr(bytes(6), KEY, 0xFFFC)
+        encrypt_ctr(bytes(6), KEY, 0xFFFE)  # 3 blok: 0xFFFE, 0xFFFF, lalu overflow
 
 
 def test_decrypt_same_counter_limit():
