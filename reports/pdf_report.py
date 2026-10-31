@@ -10,9 +10,9 @@ Prinsip penting:
   sebagai keberhasilan.
 * PDF dibuat sepenuhnya lokal; tidak ada API atau layanan eksternal.
 
-Layout: A4, latar putih, aksen navy/violet/cyan secukupnya, tabel dengan
-sel Paragraph sehingga teks panjang membungkus dan header tabel berulang
-saat tabel menerus ke halaman berikutnya.
+Layout: A4, latar putih, monokrom hitam/abu-abu formal untuk cetak, tabel
+dengan sel Paragraph sehingga teks panjang membungkus dan header tabel
+berulang saat tabel menerus ke halaman berikutnya.
 """
 
 from __future__ import annotations
@@ -253,21 +253,14 @@ def _get_fonts() -> dict[str, str]:
     return _FONT_STATE
 
 
-# Design tokens (versi terang untuk dokumen cetak)
-NAVY = "#0F1B33"
-VIOLET = "#8B5CF6"
-VIOLET_DARK = "#6D28D9"
-CYAN = "#0891B2"
-TEXT = "#111827"
-MUTED = "#64748B"
-BORDER = "#CBD5E1"
-ZEBRA = "#F6F8FC"
-SUCCESS = "#15803D"
-DANGER = "#B91C1C"
-WARNING_BG = "#FEF3C7"
-WARNING_BORDER = "#D97706"
-INFO_BG = "#EEF2FF"
-INFO_BORDER = "#8B5CF6"
+# Design tokens (monokrom untuk dokumen cetak: hitam/abu-abu formal)
+INK = "#1A1A1A"          # teks utama & latar kepala tabel
+TEXT = INK               # alias teks utama
+MUTED = "#595959"        # teks sekunder, header/footer
+BORDER = "#8C8C8C"       # garis tabel
+ZEBRA = "#F5F5F5"        # baris berselang netral
+CALLOUT_BG = "#F2F2F2"   # kotak info/peringatan
+CALLOUT_BORDER = "#4D4D4D"
 
 
 def _status_markup(verified: bool | None) -> str:
@@ -275,8 +268,8 @@ def _status_markup(verified: bool | None) -> str:
     if verified is None:
         return esc("Belum dijalankan")
     if verified:
-        return f'<font color="{SUCCESS}"><b>BERHASIL</b></font>'
-    return f'<font color="{DANGER}"><b>GAGAL</b></font>'
+        return "<b>BERHASIL</b>"
+    return "<b>GAGAL</b>"
 
 
 def _content_width() -> float:
@@ -294,23 +287,23 @@ def _styles() -> dict:
     return {
         "title": ParagraphStyle(
             "title", fontName=f["bold"], fontSize=21, leading=26,
-            textColor=NAVY, alignment=TA_CENTER,
+            textColor=INK, alignment=TA_CENTER,
         ),
         "subtitle": ParagraphStyle(
             "subtitle", fontName=f["regular"], fontSize=11.5, leading=15,
-            textColor=CYAN, alignment=TA_CENTER,
+            textColor=MUTED, alignment=TA_CENTER,
         ),
         "h1": ParagraphStyle(
             "h1", fontName=f["bold"], fontSize=13.5, leading=17,
-            textColor=NAVY, spaceBefore=16, spaceAfter=4, keepWithNext=1,
+            textColor=INK, spaceBefore=16, spaceAfter=4, keepWithNext=1,
         ),
         "h1x": ParagraphStyle(
             "h1x", fontName=f["bold"], fontSize=13.5, leading=17,
-            textColor=NAVY, spaceBefore=16, spaceAfter=4, keepWithNext=1,
+            textColor=INK, spaceBefore=16, spaceAfter=4, keepWithNext=1,
         ),
         "h2": ParagraphStyle(
             "h2", fontName=f["bold"], fontSize=11, leading=14,
-            textColor=VIOLET_DARK, spaceBefore=10, spaceAfter=4, keepWithNext=1,
+            textColor=INK, spaceBefore=10, spaceAfter=4, keepWithNext=1,
         ),
         "body": ParagraphStyle(
             "body", fontSize=9.8, leading=13.5, textColor=TEXT, spaceAfter=4,
@@ -347,14 +340,14 @@ def _h1(story: list, styles: dict, text: str, register_toc: bool = True) -> None
     from reportlab.platypus import HRFlowable, Paragraph
 
     story.append(Paragraph(esc(text), styles["h1" if register_toc else "h1x"]))
-    rule = HRFlowable(width="100%", thickness=1.1, color=VIOLET, spaceBefore=0, spaceAfter=8)
+    rule = HRFlowable(width="100%", thickness=1.0, color=INK, spaceBefore=0, spaceAfter=8)
     rule.keepWithNext = 1  # garis aksen menempel pada konten setelahnya
     story.append(rule)
 
 
 def _base_table_style() -> list[tuple]:
     return [
-        ("BACKGROUND", (0, 0), (-1, 0), NAVY),
+        ("BACKGROUND", (0, 0), (-1, 0), INK),
         ("TEXTCOLOR", (0, 0), (-1, 0), "#FFFFFF"),
         ("GRID", (0, 0), (-1, -1), 0.4, BORDER),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
@@ -391,6 +384,24 @@ def _spacer(height: float):
     from reportlab.platypus import Spacer
 
     return Spacer(1, height)
+
+
+_table_counter = [0]
+
+
+def _reset_table_counter() -> None:
+    _table_counter[0] = 0
+
+
+def _table_caption(story: list, styles: dict, caption: str) -> None:
+    """Keterangan tabel bernomor (gaya akademik); menempel pada tabelnya."""
+    from reportlab.platypus import Paragraph
+
+    _table_counter[0] += 1
+    cap = Paragraph(f"Tabel {_table_counter[0]}. {esc(caption)}", styles["muted"])
+    cap.keepWithNext = 1
+    story.append(cap)
+    story.append(_spacer(2))
 
 
 # ---------------------------------------------------------------------------
@@ -556,7 +567,7 @@ def _cover(story: list, styles: dict, metadata: ReportMetadata, generated_at: da
         )
     )
     story.append(_spacer(6))
-    story.append(HRFlowable(width="30%", thickness=2.2, color=VIOLET, spaceAfter=18, hAlign="CENTER"))
+    story.append(HRFlowable(width="100%", thickness=1.4, color=INK, spaceAfter=24))
     story.append(Paragraph(esc(metadata.title), styles["title"]))
     story.append(_spacer(8))
     story.append(
@@ -621,7 +632,7 @@ def _cover(story: list, styles: dict, metadata: ReportMetadata, generated_at: da
         story, styles,
         f"<b>Peringatan:</b> {_DISCLAIMER} Seluruh hasil pada laporan ini berasal dari "
         "eksekusi aktual aplikasi pada parameter uji yang dimasukkan pengguna.",
-        WARNING_BG, WARNING_BORDER,
+        CALLOUT_BG, CALLOUT_BORDER,
     )
     story.append(
         Paragraph(
@@ -725,7 +736,15 @@ def _summary_section(story: list, styles: dict, result_map: dict[str, ModeResult
                     Paragraph(str(result.ciphertext_length), styles["cell"]),
                 ]
             )
-    story.append(Table(body_rows, repeatRows=1, style=_base_table_style(), colWidths=[52, 120, 105, 62, 80]))
+    _table_caption(story, styles, "Status eksekusi dan verifikasi dekripsi per mode")
+    story.append(
+        Table(
+            body_rows,
+            repeatRows=1,
+            style=_base_table_style() + [("ALIGN", (3, 1), (4, -1), "CENTER")],
+            colWidths=[52, 120, 105, 62, 80],
+        )
+    )
 
 
 def _purpose_section(story: list, styles: dict, result_map: dict[str, ModeResult]) -> None:
@@ -798,6 +817,7 @@ def _algorithm_section(story: list, styles: dict) -> None:
         )
     from reportlab.platypus import Table
 
+    _table_caption(story, styles, "Rumus enkripsi dan dekripsi per mode operasi")
     story.append(Table(rows, repeatRows=1, style=_base_table_style(), colWidths=[38, None, None, 150]))
 
 
@@ -824,7 +844,7 @@ def _mode_section(story: list, styles: dict, mode: str, result: ModeResult | Non
             f"sehingga tidak ada parameter, tabel blok, trace, atau status verifikasi yang dapat "
             f"disajikan untuk mode ini. Laporan tidak membuat data contoh; jalankan mode {mode} "
             "pada halaman Playground untuk memasukkan hasilnya ke laporan.",
-            INFO_BG, INFO_BORDER,
+            CALLOUT_BG, CALLOUT_BORDER,
         )
         return
 
@@ -872,6 +892,7 @@ def _mode_section(story: list, styles: dict, mode: str, result: ModeResult | Non
             f"{_status_markup(result.verified)} (dekripsi round-trip terhadap plaintext asli)",
         )
     )
+    _table_caption(story, styles, f"Parameter eksekusi mode {mode}")
     story.append(
         Table(param_rows, colWidths=[120, None], style=[
             ("GRID", (0, 0), (-1, -1), 0.4, BORDER),
@@ -887,8 +908,7 @@ def _mode_section(story: list, styles: dict, mode: str, result: ModeResult | Non
     if result.decryption_error:
         story.append(
             Paragraph(
-                f'<font color="{DANGER}"><b>Dekripsi menghasilkan error:</b></font> '
-                f"{esc(result.decryption_error)}",
+                f"<b>Dekripsi menghasilkan error:</b> {esc(result.decryption_error)}",
                 styles["body"],
             )
         )
@@ -902,7 +922,7 @@ def _mode_section(story: list, styles: dict, mode: str, result: ModeResult | Non
     if result.verified:
         story.append(
             Paragraph(
-                f'<font color="{SUCCESS}"><b>Verifikasi BERHASIL</b></font> - hasil dekripsi identik '
+                "<b>Verifikasi BERHASIL</b> - hasil dekripsi identik "
                 "byte-per-byte dengan plaintext asli.",
                 styles["body"],
             )
@@ -910,7 +930,7 @@ def _mode_section(story: list, styles: dict, mode: str, result: ModeResult | Non
     else:
         story.append(
             Paragraph(
-                f'<font color="{DANGER}"><b>Verifikasi GAGAL</b></font> - hasil dekripsi TIDAK identik '
+                "<b>Verifikasi GAGAL</b> - hasil dekripsi TIDAK identik "
                 "dengan plaintext asli. Jangan menuliskan mode ini sebagai round-trip yang berhasil.",
                 styles["body"],
             )
@@ -938,10 +958,12 @@ def _mode_section(story: list, styles: dict, mode: str, result: ModeResult | Non
             )
         )
     else:
+        _table_caption(story, styles, f"Blok input dan ciphertext mode {mode}")
         story.append(_block_table(styles, mode, result))
 
     if result.blocks and result.blocks[0].feistel_rounds:
         story.append(Paragraph("Trace ronde Feistel (enkripsi) - Blok 1", styles["h2"]))
+        _table_caption(story, styles, "Trace ronde Feistel enkripsi blok 1")
         story.append(_round_trace_table(styles, result.blocks[0].feistel_rounds))
         if include_traces:
             story.append(
@@ -966,10 +988,10 @@ def _block_table(styles: dict, mode: str, result: ModeResult):
         widths = [38, 62, 116, 62, 116]
     elif mode == "CBC":
         headers += ["XOR dgn (IV/C prev)", "Input Feistel", "Ciphertext HEX", "Ciphertext BIN"]
-        widths = [34, 56, 82, 56, 56, 56, 82]
+        widths = [34, 58, 95, 58, 58, 60, 95]
     else:  # CTR
         headers += ["Counter", "Keystream", "Ciphertext HEX", "Ciphertext BIN"]
-        widths = [34, 56, 82, 50, 56, 56, 82]
+        widths = [34, 58, 95, 52, 58, 60, 95]
 
     rows = [[Paragraph(esc(h), styles["cell_head"]) for h in headers]]
     for block in result.blocks:
@@ -1002,7 +1024,12 @@ def _block_table(styles: dict, mode: str, result: ModeResult):
     usable_width = _content_width()
     scale = min(1.0, usable_width / sum(widths))
     widths = [w * scale for w in widths]
-    return Table(rows, colWidths=widths, repeatRows=1, style=_base_table_style())
+    return Table(
+        rows,
+        colWidths=widths,
+        repeatRows=1,
+        style=_base_table_style() + [("ALIGN", (0, 1), (0, -1), "CENTER")],
+    )
 
 
 def _round_trace_table(styles: dict, rounds: list):
@@ -1023,7 +1050,12 @@ def _round_trace_table(styles: dict, rounds: list):
             ]
         )
     widths = [44, 46, 46, 46, 46, 46, 46]
-    return Table(rows, colWidths=widths, repeatRows=1, style=_base_table_style())
+    return Table(
+        rows,
+        colWidths=widths,
+        repeatRows=1,
+        style=_base_table_style() + [("ALIGN", (0, 1), (0, -1), "CENTER")],
+    )
 
 
 def _comparison_section(story: list, styles: dict, result_map: dict[str, ModeResult]) -> None:
@@ -1109,6 +1141,7 @@ def _comparison_section(story: list, styles: dict, result_map: dict[str, ModeRes
 
     from reportlab.platypus import Table
 
+    _table_caption(story, styles, "Perbandingan karakteristik mode dan hasil eksekusi")
     story.append(
         Table(table_rows, colWidths=[120, None, None, None], repeatRows=1, style=_base_table_style())
     )
@@ -1291,12 +1324,12 @@ def build_pdf_bytes(
     )
 
     story: list = []
+    _reset_table_counter()
     _cover(story, styles, metadata, generated_at)
     _toc_section(story, styles)
     _summary_section(story, styles, result_map, generated_at)
     _purpose_section(story, styles, result_map)
     _algorithm_section(story, styles)
-    story.append(PageBreak())  # bagian hasil: satu halaman baru
     for mode in SUPPORTED_MODES:
         _mode_section(story, styles, mode, result_map.get(mode), include_traces)
     story.append(PageBreak())  # bagian sintesis
