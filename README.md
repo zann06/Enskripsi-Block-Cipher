@@ -49,8 +49,8 @@ Melalui antarmuka berbasis Streamlit yang responsif dan modern, pengguna dapat:
 CipherLab/
 ├── app.py                          # Aplikasi utama Streamlit
 ├── requirements.txt                # Dependensi pustaka Python
-├── README.md                       # Dokumentasi proyek
 ├── pytest.ini                      # Konfigurasi Pytest
+├── conftest.py                     # Path root untuk import saat testing
 ├── crypto/                         # Mesin inti kriptografi
 │   ├── __init__.py
 │   ├── feistel16.py                # Inti cipher Feistel 16-bit & penjadwalan kunci
@@ -66,19 +66,23 @@ CipherLab/
 │   ├── pdf_report.py               # Generator PDF ReportLab
 │   └── export.py                   # Utilitas ekspor Markdown / CSV
 ├── tests/                          # Suite pengujian otomatis yang komprehensif
-│   ├── test_feistel16.py           # Pengujian Feistel KAT & ronde
+│   ├── ref_impl.py                 # Implementasi referensi independen (KAT)
+│   ├── test_feistel16.py           # Pengujian Feistel KAT, invers ekshaustif 65.536 blok
 │   ├── test_ecb.py                 # Pengujian mode ECB
 │   ├── test_cbc.py                 # Pengujian mode CBC
-│   ├── test_ctr.py                 # Pengujian mode CTR
+│   ├── test_ctr.py                 # Pengujian mode CTR + overflow counter
 │   ├── test_padding.py             # Pengujian perilaku padding
 │   ├── test_encoding.py            # Pengujian utilitas encoding
 │   ├── test_pipeline.py            # Pengujian verifikasi pipa eksekusi
 │   ├── test_export.py              # Pengujian ekspor
 │   └── test_pdf_report.py          # Pengujian pembuatan laporan PDF
+├── PRD.md / PROMPT.md              # Dokumen spesifikasi
+├── PDF-REPORT-CHECKLIST.md         # Checklist implementasi fitur laporan PDF
 └── docs/                           # Dokumentasi dan aset
     ├── DESIGN-REFERENCE.md
-    ├── REPORT-GUIDE.md
-    ├── contoh-laporan.pdf          # Contoh laporan PDF yang dihasilkan
+    ├── contoh-laporan.pdf          # Contoh laporan PDF dari eksekusi aktual
+    ├── PDF/
+    │   └── Laporan_CipherLab_contoh.pdf
     └── screenshots/                # Tangkapan layar aplikasi
         ├── dashboard.png
         ├── playground.png
@@ -174,7 +178,18 @@ Manajemen anggota kelompok, pengeditan nama file PDF kustom, dan pembuatan lapor
 
 Anda dapat memeriksa contoh laporan PDF yang telah dibuat sebelumnya langsung dari hasil eksekusi aplikasi aktual:
 
-- **[Unduh / Lihat Contoh Laporan PDF (docs/contoh-laporan.pdf)](docs/contoh-laporan.pdf)**
+- **[Lihat Contoh Laporan PDF (docs/contoh-laporan.pdf)](docs/contoh-laporan.pdf)** — juga tersalin di [`docs/PDF/Laporan_CipherLab_contoh.pdf`](docs/PDF/Laporan_CipherLab_contoh.pdf).
+
+## Cara Menggunakan Laporan PDF
+
+1. Jalankan enkripsi **ECB**, **CBC**, dan **CTR** pada halaman *Playground* (tombol **Use Example** mengisi form dengan contoh uji).
+2. Buka halaman **Reports** dan isi *Identitas Laporan*: judul (wajib), nama kelompok (wajib), mata kuliah, dosen, kelas, serta tanggal (default hari ini, dapat diedit).
+3. Klik **Tambah anggota** untuk memasukkan daftar anggota; nama wajib diisi, NIM opsional, dan setiap baris dapat dihapus kembali.
+4. Periksa panel **Status pengujian**. Mode yang belum dijalankan ditandai *Belum dijalankan*, dan tombol unduh aktif setelah minimal satu mode dieksekusi.
+5. **Nama file PDF** terisi otomatis dari nama kelompok/judul (mis. `Laporan_CipherLab_Kelompok_Contoh`) dan tetap dapat diedit sebelum diunduh.
+6. Klik **Unduh Laporan PDF**. PDF dibuat sepenuhnya lokal dengan ReportLab — identitas kelompok, ringkasan, parameter, tabel blok HEX/BIN per mode, trace ronde Feistel, hasil dekripsi, status verifikasi, perbandingan mode, kesimpulan, batasan keamanan, daftar isi, serta lampiran trace lengkap dan jadwal kunci.
+
+Tersedia juga ekspor **Markdown** dan **CSV** dari data eksekusi yang sama pada halaman Reports.
 
 ---
 

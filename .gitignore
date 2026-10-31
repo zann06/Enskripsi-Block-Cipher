@@ -8,10 +8,15 @@ venv/
 # Streamlit
 .streamlit/secrets.toml
 
-# Laporan yang dihasilkan pengguna
+# Laporan yang dihasilkan pengguna (contoh di docs/ tetap disertakan)
 output/
 *.pdf
 !docs/contoh-laporan.pdf
+!docs/PDF/*.pdf
+
+# Peluncur lokal & metadata OS
+run_streamlit.bat
+desktop.ini
 
 # OS
 .DS_Store
