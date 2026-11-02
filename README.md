@@ -8,6 +8,8 @@
 [![Pytest](https://img.shields.io/badge/Pytest-Passing-green.svg)](https://docs.pytest.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/deploy?repository=zann06/Enskripsi-Block-Cipher&branch=master&mainModule=app.py)
+
 *Aplikasi web dan laboratorium edukasi untuk mengeksplorasi operasi block cipher menggunakan jaringan Feistel 16-bit kustom.*
 
 </div>
@@ -48,7 +50,8 @@ Melalui antarmuka berbasis Streamlit yang responsif dan modern, pengguna dapat:
 ```text
 CipherLab/
 ├── app.py                          # Aplikasi utama Streamlit
-├── requirements.txt                # Dependensi pustaka Python
+├── requirements.txt                # Dependensi runtime (dipakai saat deploy)
+├── requirements-dev.txt            # Dependensi tambahan untuk pengembangan & pengujian
 ├── pytest.ini                      # Konfigurasi Pytest
 ├── conftest.py                     # Path root untuk import saat testing
 ├── .streamlit/
@@ -114,9 +117,12 @@ cd Enskripsi-Block-Cipher
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 
-# 3. Instal dependensi
-pip install -r requirements.txt
+# 3. Instal dependensi (runtime + alat pengembangan/pengujian)
+pip install -r requirements-dev.txt
 ```
+
+> Ingin hanya menjalankan aplikasi tanpa alat pengujian? Gunakan `pip install -r requirements.txt`
+> (daftar ringkas inilah yang dipakai saat deploy ke Streamlit Community Cloud).
 
 ### Menjalankan Aplikasi
 
@@ -132,6 +138,43 @@ Tema gelap dibaca otomatis dari [`.streamlit/config.toml`](.streamlit/config.tom
 ```powershell
 python -m pytest -v
 ```
+
+---
+
+## Demo Live (Streamlit Community Cloud)
+
+Repositori ini siap dideploy ke **Streamlit Community Cloud** (gratis) sehingga aplikasi dapat
+diakses melalui URL publik. Konfigurasi sudah disiapkan: [`requirements.txt`](requirements.txt)
+ringkas dan tema gelap di [`.streamlit/config.toml`](.streamlit/config.toml).
+
+### Cara Deploy
+
+1. Masuk ke **[share.streamlit.io](https://share.streamlit.io)** dengan akun GitHub.
+2. Klik **Create app** → pilih **Deploy a public app from GitHub**.
+3. Isi konfigurasi berikut:
+
+   | Pengaturan | Nilai |
+   | :--- | :--- |
+   | **Repository** | `zann06/Enskripsi-Block-Cipher` |
+   | **Branch** | `master` |
+   | **Main file path** | `app.py` |
+
+4. Buka **Advanced settings → Python version** dan pilih **3.11** (atau **3.12**) — versi ini
+   diuji pada lingkungan lokal. Penting: **jangan** memakai `runtime.txt`, karena Streamlit
+   Community Cloud **mengabaikannya** dan memilih Python default (3.13/3.14).
+5. Klik **Deploy**. Streamlit memasang `requirements.txt`, lalu menerbitkan URL publik seperti
+   `https://<nama-app>.streamlit.app` yang bisa dibagikan.
+
+> Setelah aplikasi live, ganti tautan badge **Open in Streamlit** di bagian atas README ini
+> dengan URL `.streamlit.app` hasil deploy.
+
+**Catatan deployment**
+
+- `requirements.txt` sengaja hanya memuat dependensi runtime (`streamlit`, `reportlab`).
+  Dependensi pengujian (`pytest`, `pypdf`) dipisahkan ke [`requirements-dev.txt`](requirements-dev.txt)
+  agar build Cloud lebih cepat.
+- Tidak ada `runtime.txt` di repo ini — pemilihan versi Python dilakukan lewat UI deploy seperti
+  pada langkah 4.
 
 ---
 

@@ -1,0 +1,8 @@
+# CipherLab — dependensi pengembangan & pengujian (lokal)
+# Jalankan: pip install -r requirements-dev.txt
+
+-r requirements.txt
+
+# Pengujian
+pytest>=8.0
+pypdf>=4.0          # ekstraksi teks PDF untuk memverifikasi isi laporan di test
