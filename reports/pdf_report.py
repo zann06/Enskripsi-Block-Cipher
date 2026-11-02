@@ -29,11 +29,17 @@ from crypto.encoding import display_text, format_bin, format_hex, int16_to_bin, 
 from crypto.feistel16 import BLOCK_BITS, BLOCK_BYTES, ROUNDS, key_schedule
 from crypto.pipeline import SUPPORTED_MODES, normalize_mode
 from crypto.results import ModeResult
+from .template import (
+    DEFAULT_FOOTER_TEXT,
+    DEFAULT_HEADER_TEXT,
+    ReportTemplate,
+)
 
 __all__ = [
     "Member",
     "ReportLabMissingError",
     "ReportMetadata",
+    "ReportTemplate",
     "build_pdf_bytes",
     "default_filename",
     "resolve_filename",
@@ -211,46 +217,78 @@ _HELVETICA = {
     "bold_italic": "Helvetica-BoldOblique",
 }
 
-_FONT_STATE: dict[str, str] | None = None
+_TIMES = {
+    "regular": "Times-Roman",
+    "bold": "Times-Bold",
+    "italic": "Times-Italic",
+    "bold_italic": "Times-BoldItalic",
+}
+
+_FONT_CACHE: dict[str, dict[str, str]] = {}
 
 
-def _get_fonts() -> dict[str, str]:
-    """Daftarkan font Bitstream Vera bawaan ReportLab sekali; fallback Helvetica.
+def _register_vera() -> dict[str, str]:
+    """Daftarkan font Bitstream Vera bawaan ReportLab; fallback Helvetica."""
+    import reportlab
+    from reportlab.lib.fonts import addMapping
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
 
-    Vera memberi cakupan Latin yang lebih luas (mis. nama dengan aksen)
-    dibanding Helvetica Type1.
+    fonts_dir = os.path.join(os.path.dirname(reportlab.__file__), "fonts")
+    files = {
+        "regular": "Vera.ttf",
+        "bold": "VeraBd.ttf",
+        "italic": "VeraIt.ttf",
+        "bold_italic": "VeraBI.ttf",
+    }
+    registered: dict[str, str] = {}
+    for style, filename in files.items():
+        path = os.path.join(fonts_dir, filename)
+        if not os.path.exists(path):
+            raise FileNotFoundError(path)
+        pdfmetrics.registerFont(TTFont(f"CipherLab-{style}", path))
+        registered[style] = f"CipherLab-{style}"
+    addMapping("CipherLab", 0, 0, registered["regular"])
+    addMapping("CipherLab", 0, 1, registered["italic"])
+    addMapping("CipherLab", 1, 0, registered["bold"])
+    addMapping("CipherLab", 1, 1, registered["bold_italic"])
+    return registered
+
+
+def _get_fonts(family: str = "vera") -> dict[str, str]:
+    """Return pemetaan font untuk family terpilih (di-cache per family).
+
+    ``vera`` memakai font Bitstream Vera bawaan ReportLab (cakupan Latin luas;
+    fallback Helvetica bila berkasnya tak ada), ``helvetica`` dan ``times``
+    memakai font dasar yang selalu tersedia.
     """
-    global _FONT_STATE
-    if _FONT_STATE is not None:
-        return _FONT_STATE
-    try:
-        import reportlab
-        from reportlab.lib.fonts import addMapping
-        from reportlab.pdfbase import pdfmetrics
-        from reportlab.pdfbase.ttfonts import TTFont
+    key = (family or "vera").strip().lower()
+    if key in _FONT_CACHE:
+        return _FONT_CACHE[key]
+    if key == "helvetica":
+        fonts = dict(_HELVETICA)
+    elif key == "times":
+        fonts = dict(_TIMES)
+    else:
+        try:
+            fonts = _register_vera()
+        except Exception:
+            fonts = dict(_HELVETICA)
+    _FONT_CACHE[key] = fonts
+    return fonts
 
-        fonts_dir = os.path.join(os.path.dirname(reportlab.__file__), "fonts")
-        files = {
-            "regular": "Vera.ttf",
-            "bold": "VeraBd.ttf",
-            "italic": "VeraIt.ttf",
-            "bold_italic": "VeraBI.ttf",
-        }
-        registered: dict[str, str] = {}
-        for style, filename in files.items():
-            path = os.path.join(fonts_dir, filename)
-            if not os.path.exists(path):
-                raise FileNotFoundError(path)
-            pdfmetrics.registerFont(TTFont(f"CipherLab-{style}", path))
-            registered[style] = f"CipherLab-{style}"
-        addMapping("CipherLab", 0, 0, registered["regular"])
-        addMapping("CipherLab", 0, 1, registered["italic"])
-        addMapping("CipherLab", 1, 0, registered["bold"])
-        addMapping("CipherLab", 1, 1, registered["bold_italic"])
-        _FONT_STATE = registered
-    except Exception:
-        _FONT_STATE = dict(_HELVETICA)
-    return _FONT_STATE
+
+def _readable_text(bg_hex: str) -> str:
+    """Pilih warna teks kontras (putih/hitam) untuk latar hex tertentu."""
+    value = str(bg_hex or "").lstrip("#")
+    if len(value) == 3:
+        value = "".join(ch * 2 for ch in value)
+    try:
+        red, green, blue = (int(value[i : i + 2], 16) for i in (0, 2, 4))
+    except (ValueError, IndexError):
+        return "#FFFFFF"
+    luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255
+    return "#FFFFFF" if luminance < 0.6 else "#1A1A1A"
 
 
 # Design tokens (monokrom untuk dokumen cetak: hitam/abu-abu formal)
@@ -279,12 +317,14 @@ def _content_width() -> float:
     return A4[0] - 90
 
 
-def _styles() -> dict:
+def _styles(template: ReportTemplate | None = None) -> dict:
     from reportlab.lib.enums import TA_CENTER
     from reportlab.lib.styles import ParagraphStyle
 
-    f = _get_fonts()
-    return {
+    template = (template or ReportTemplate()).normalized()
+    accent = template.accent_color
+    f = _get_fonts(template.font_family)
+    styles = {
         "title": ParagraphStyle(
             "title", fontName=f["bold"], fontSize=21, leading=26,
             textColor=INK, alignment=TA_CENTER,
@@ -323,13 +363,16 @@ def _styles() -> dict:
         ),
         "cell_head": ParagraphStyle(
             "cell_head", fontSize=8.4, leading=10.5,
-            textColor="#FFFFFF", fontName=f["bold"],
+            textColor=_readable_text(accent), fontName=f["bold"],
         ),
         "cover_meta": ParagraphStyle(
             "cover_meta", fontSize=10.5, leading=16, textColor=TEXT,
             fontName=f["regular"], alignment=TA_CENTER,
         ),
     }
+    styles["accent"] = accent
+    styles["_font_family"] = template.font_family
+    return styles
 
 
 def _h1(story: list, styles: dict, text: str, register_toc: bool = True) -> None:
@@ -340,15 +383,18 @@ def _h1(story: list, styles: dict, text: str, register_toc: bool = True) -> None
     from reportlab.platypus import HRFlowable, Paragraph
 
     story.append(Paragraph(esc(text), styles["h1" if register_toc else "h1x"]))
-    rule = HRFlowable(width="100%", thickness=1.0, color=INK, spaceBefore=0, spaceAfter=8)
+    rule = HRFlowable(
+        width="100%", thickness=1.0, color=styles.get("accent", INK), spaceBefore=0, spaceAfter=8
+    )
     rule.keepWithNext = 1  # garis aksen menempel pada konten setelahnya
     story.append(rule)
 
 
-def _base_table_style() -> list[tuple]:
+def _base_table_style(styles: dict | None = None) -> list[tuple]:
+    accent = (styles or {}).get("accent", INK)
     return [
-        ("BACKGROUND", (0, 0), (-1, 0), INK),
-        ("TEXTCOLOR", (0, 0), (-1, 0), "#FFFFFF"),
+        ("BACKGROUND", (0, 0), (-1, 0), accent),
+        ("TEXTCOLOR", (0, 0), (-1, 0), _readable_text(accent)),
         ("GRID", (0, 0), (-1, -1), 0.4, BORDER),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("TOPPADDING", (0, 0), (-1, -1), 3),
@@ -556,18 +602,53 @@ def build_findings(result_map: dict[str, ModeResult]) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
-def _cover(story: list, styles: dict, metadata: ReportMetadata, generated_at: datetime) -> None:
+def _logo_flowable(logo: bytes | None, max_width: float = 130, max_height: float = 90):
+    """Flowable gambar logo dari bytes; ``None`` bila kosong/tidak valid.
+
+    Berkas yang tidak dapat dibaca (bukan gambar valid) diabaikan tanpa
+    menggagalkan pembuatan laporan.
+    """
+    if not logo:
+        return None
+    try:
+        from io import BytesIO
+
+        from reportlab.lib.utils import ImageReader
+        from reportlab.platypus import Image
+
+        reader = ImageReader(BytesIO(logo))
+        width, height = reader.getSize()
+        if width <= 0 or height <= 0:
+            return None
+        scale = min(max_width / width, max_height / height, 1.0)
+        image = Image(BytesIO(logo), width=width * scale, height=height * scale)
+        image.hAlign = "CENTER"
+        return image
+    except Exception:
+        return None
+
+
+def _cover(story: list, styles: dict, metadata: ReportMetadata, generated_at: datetime,
+           template: ReportTemplate) -> None:
     from reportlab.platypus import HRFlowable, PageBreak, Paragraph, Table
 
+    accent = styles.get("accent", INK)
     story.append(_spacer(40))
+
+    logo = _logo_flowable(template.logo)
+    if logo is not None:
+        story.append(logo)
+        story.append(_spacer(12))
+
     story.append(
         Paragraph(
-            f"CipherLab - Educational Project - Block {BLOCK_BITS} bit",
+            esc(template.institution) if template.institution
+            else f"CipherLab - Educational Project - Block {BLOCK_BITS} bit",
             styles["subtitle"],
         )
     )
     story.append(_spacer(6))
-    story.append(HRFlowable(width="100%", thickness=1.4, color=INK, spaceAfter=24))
+    story.append(HRFlowable(width="100%", thickness=1.4, color=accent, spaceAfter=24))
     story.append(Paragraph(esc(metadata.title), styles["title"]))
     story.append(_spacer(8))
     story.append(
@@ -623,7 +704,7 @@ def _cover(story: list, styles: dict, metadata: ReportMetadata, generated_at: da
                 member_rows,
                 colWidths=[36, None, 130],
                 repeatRows=1,
-                style=_base_table_style(),
+                style=_base_table_style(styles),
             )
         )
         story.append(_spacer(18))
@@ -632,7 +713,7 @@ def _cover(story: list, styles: dict, metadata: ReportMetadata, generated_at: da
         story, styles,
         f"<b>Peringatan:</b> {_DISCLAIMER} Seluruh hasil pada laporan ini berasal dari "
         "eksekusi aktual aplikasi pada parameter uji yang dimasukkan pengguna.",
-        CALLOUT_BG, CALLOUT_BORDER,
+        CALLOUT_BG, accent,
     )
     story.append(
         Paragraph(
@@ -651,7 +732,7 @@ def _toc_section(story: list, styles: dict) -> None:
     from reportlab.platypus.tableofcontents import TableOfContents
 
     _h1(story, styles, "Daftar Isi", register_toc=False)
-    f = _get_fonts()
+    f = _get_fonts(styles.get("_font_family", "vera"))
     toc = TableOfContents(
         levelStyles=[
             ParagraphStyle(
@@ -665,10 +746,11 @@ def _toc_section(story: list, styles: dict) -> None:
     story.append(PageBreak())
 
 
-def _summary_section(story: list, styles: dict, result_map: dict[str, ModeResult], generated_at: datetime) -> None:
+def _summary_section(story: list, styles: dict, result_map: dict[str, ModeResult],
+                     generated_at: datetime, title: str = "1. Ringkasan Eksekusi") -> None:
     from reportlab.platypus import Paragraph, Table
 
-    _h1(story, styles, "1. Ringkasan Eksekusi")
+    _h1(story, styles, title)
     executed = [mode for mode in SUPPORTED_MODES if mode in result_map]
     verified = [mode for mode in executed if result_map[mode].verified]
     story.append(
@@ -741,16 +823,17 @@ def _summary_section(story: list, styles: dict, result_map: dict[str, ModeResult
         Table(
             body_rows,
             repeatRows=1,
-            style=_base_table_style() + [("ALIGN", (3, 1), (4, -1), "CENTER")],
+            style=_base_table_style(styles) + [("ALIGN", (3, 1), (4, -1), "CENTER")],
             colWidths=[52, 120, 105, 62, 80],
         )
     )
 
 
-def _purpose_section(story: list, styles: dict, result_map: dict[str, ModeResult]) -> None:
+def _purpose_section(story: list, styles: dict, result_map: dict[str, ModeResult],
+                     title: str = "2. Tujuan dan Ruang Lingkup") -> None:
     from reportlab.platypus import Paragraph
 
-    _h1(story, styles, "2. Tujuan dan Ruang Lingkup")
+    _h1(story, styles, title)
     story.append(
         Paragraph(
             esc(
@@ -775,10 +858,11 @@ def _purpose_section(story: list, styles: dict, result_map: dict[str, ModeResult
     )
 
 
-def _algorithm_section(story: list, styles: dict) -> None:
+def _algorithm_section(story: list, styles: dict,
+                       title: str = "3. Algoritma dan Rumus Mode") -> None:
     from reportlab.platypus import Paragraph
 
-    _h1(story, styles, "3. Algoritma dan Rumus Mode")
+    _h1(story, styles, title)
     story.append(
         Paragraph(
             esc(
@@ -818,7 +902,7 @@ def _algorithm_section(story: list, styles: dict) -> None:
     from reportlab.platypus import Table
 
     _table_caption(story, styles, "Rumus enkripsi dan dekripsi per mode operasi")
-    story.append(Table(rows, repeatRows=1, style=_base_table_style(), colWidths=[38, None, None, 150]))
+    story.append(Table(rows, repeatRows=1, style=_base_table_style(styles), colWidths=[38, None, None, 150]))
 
 
 def _param_row(styles: dict, label: str, value_markup: str) -> list:
@@ -831,11 +915,13 @@ def _param_row(styles: dict, label: str, value_markup: str) -> list:
 
 
 def _mode_section(story: list, styles: dict, mode: str, result: ModeResult | None,
-                  include_traces: bool) -> None:
+                  include_traces: bool, title: str | None = None) -> None:
     from reportlab.platypus import Paragraph, Table
 
-    section_number = {"ECB": 4, "CBC": 5, "CTR": 6}[mode]
-    _h1(story, styles, f"{section_number}. Mode {mode}")
+    if title is None:
+        section_number = {"ECB": 4, "CBC": 5, "CTR": 6}[mode]
+        title = f"{section_number}. Mode {mode}"
+    _h1(story, styles, title)
 
     if result is None:
         _callout(
@@ -844,7 +930,7 @@ def _mode_section(story: list, styles: dict, mode: str, result: ModeResult | Non
             f"sehingga tidak ada parameter, tabel blok, trace, atau status verifikasi yang dapat "
             f"disajikan untuk mode ini. Laporan tidak membuat data contoh; jalankan mode {mode} "
             "pada halaman Playground untuk memasukkan hasilnya ke laporan.",
-            CALLOUT_BG, CALLOUT_BORDER,
+            CALLOUT_BG, styles.get("accent", CALLOUT_BORDER),
         )
         return
 
@@ -1028,7 +1114,7 @@ def _block_table(styles: dict, mode: str, result: ModeResult):
         rows,
         colWidths=widths,
         repeatRows=1,
-        style=_base_table_style() + [("ALIGN", (0, 1), (0, -1), "CENTER")],
+        style=_base_table_style(styles) + [("ALIGN", (0, 1), (0, -1), "CENTER")],
     )
 
 
@@ -1054,14 +1140,15 @@ def _round_trace_table(styles: dict, rounds: list):
         rows,
         colWidths=widths,
         repeatRows=1,
-        style=_base_table_style() + [("ALIGN", (0, 1), (0, -1), "CENTER")],
+        style=_base_table_style(styles) + [("ALIGN", (0, 1), (0, -1), "CENTER")],
     )
 
 
-def _comparison_section(story: list, styles: dict, result_map: dict[str, ModeResult]) -> None:
+def _comparison_section(story: list, styles: dict, result_map: dict[str, ModeResult],
+                        title: str = "7. Perbandingan Mode") -> None:
     from reportlab.platypus import Paragraph, Table
 
-    _h1(story, styles, "7. Perbandingan Mode")
+    _h1(story, styles, title)
 
     def cell(mode: str, text: str, mono: bool = False, markup: str | None = None) -> Paragraph:
         if markup is not None:
@@ -1143,7 +1230,7 @@ def _comparison_section(story: list, styles: dict, result_map: dict[str, ModeRes
 
     _table_caption(story, styles, "Perbandingan karakteristik mode dan hasil eksekusi")
     story.append(
-        Table(table_rows, colWidths=[120, None, None, None], repeatRows=1, style=_base_table_style())
+        Table(table_rows, colWidths=[120, None, None, None], repeatRows=1, style=_base_table_style(styles))
     )
     story.append(
         Paragraph(
@@ -1156,10 +1243,11 @@ def _comparison_section(story: list, styles: dict, result_map: dict[str, ModeRes
 
 
 def _conclusion_section(story: list, styles: dict, result_map: dict[str, ModeResult],
-                        metadata: ReportMetadata) -> None:
+                        metadata: ReportMetadata,
+                        title: str = "8. Analisis dan Kesimpulan") -> None:
     from reportlab.platypus import Paragraph
 
-    _h1(story, styles, "8. Analisis dan Kesimpulan")
+    _h1(story, styles, title)
     story.append(
         Paragraph(
             esc(
@@ -1176,10 +1264,11 @@ def _conclusion_section(story: list, styles: dict, result_map: dict[str, ModeRes
         story.append(Paragraph(esc(metadata.notes, line_breaks=True), styles["body"]))
 
 
-def _limitations_section(story: list, styles: dict) -> None:
+def _limitations_section(story: list, styles: dict,
+                         title: str = "9. Batasan dan Peringatan Keamanan") -> None:
     from reportlab.platypus import Paragraph
 
-    _h1(story, styles, "9. Batasan dan Peringatan Keamanan")
+    _h1(story, styles, title)
     limitations = [
         "Toy Feistel 16-bit hanya alat pembelajaran: blok dan kunci 16 bit terlalu kecil dan "
         "sangat rentan brute force. Algoritma ini bukan AES dan tidak boleh dipakai untuk data nyata.",
@@ -1252,6 +1341,7 @@ def build_pdf_bytes(
     results,
     include_traces: bool = True,
     generated_at: datetime | None = None,
+    template: ReportTemplate | None = None,
 ) -> bytes:
     """Bangun PDF laporan dari metadata dan hasil eksekusi aktual.
 
@@ -1259,11 +1349,17 @@ def build_pdf_bytes(
     list, atau dict ber-key mode. Mode yang tidak ada ditandai "Belum
     dijalankan". Mengembalikan bytes PDF siap diunduh.
 
+    ``template`` (opsional) hanya mengubah presentasi/struktur: warna aksen,
+    font, logo, teks header/footer, judul bagian, serta bagian mana yang
+    disertakan dan urutannya. Bila ``None``, laporan memakai tampilan bawaan.
+    Isi laporan tetap berasal murni dari data eksekusi aktual.
+
     Raises:
         ValueError: bila judul/nama kelompok kosong atau ada NIM tanpa nama.
         ReportLabMissingError: bila pustaka reportlab belum terpasang.
     """
     metadata.validate()
+    active = (template or ReportTemplate()).normalized()
     result_map = _as_result_map(results)
     generated_at = generated_at or datetime.now().astimezone()
 
@@ -1274,8 +1370,8 @@ def build_pdf_bytes(
     except ImportError as exc:  # pragma: no cover - jalur tanpa reportlab
         raise ReportLabMissingError() from exc
 
-    styles = _styles()
-    fonts = _get_fonts()
+    styles = _styles(active)
+    fonts = _get_fonts(active.font_family)
     width, height = A4
 
     buffer = BytesIO()
@@ -1289,7 +1385,7 @@ def build_pdf_bytes(
         canvas.line(doc.leftMargin, 38, width - doc.leftMargin, 38)
         canvas.drawString(
             doc.leftMargin, 27,
-            "CipherLab - laporan dibuat lokal dengan ReportLab; toy cipher 16-bit, bukan untuk data nyata.",
+            pdf_safe(active.footer_text or DEFAULT_FOOTER_TEXT),
         )
         stamp = f"Dibuat {generated_at.strftime('%d/%m/%Y %H:%M:%S')}"
         if with_number:
@@ -1298,7 +1394,7 @@ def build_pdf_bytes(
         if with_number:
             # header berjalan di atas konten untuk halaman selain cover
             canvas.setFont(fonts["italic"], 7.2)
-            canvas.drawString(doc.leftMargin, height - 30, "CipherLab - Laporan Block Cipher 16-bit")
+            canvas.drawString(doc.leftMargin, height - 30, pdf_safe(active.header_text or DEFAULT_HEADER_TEXT))
             canvas.setStrokeColor(colors.HexColor(BORDER))
             canvas.line(doc.leftMargin, height - 36, width - doc.leftMargin, height - 36)
         canvas.restoreState()
@@ -1325,19 +1421,40 @@ def build_pdf_bytes(
 
     story: list = []
     _reset_table_counter()
-    _cover(story, styles, metadata, generated_at)
-    _toc_section(story, styles)
-    _summary_section(story, styles, result_map, generated_at)
-    _purpose_section(story, styles, result_map)
-    _algorithm_section(story, styles)
-    for mode in SUPPORTED_MODES:
-        _mode_section(story, styles, mode, result_map.get(mode), include_traces)
-    story.append(PageBreak())  # bagian sintesis
-    _comparison_section(story, styles, result_map)
-    _conclusion_section(story, styles, result_map, metadata)
-    _limitations_section(story, styles)
-    if include_traces:
-        _appendix(story, styles, result_map)
+    _cover(story, styles, metadata, generated_at, active)
+
+    number = 0
+    for key in active.sections:
+        if key == "toc":
+            _toc_section(story, styles)
+        elif key == "summary":
+            number += 1
+            _summary_section(story, styles, result_map, generated_at, active.heading_for(key, number))
+        elif key == "purpose":
+            number += 1
+            _purpose_section(story, styles, result_map, active.heading_for(key, number))
+        elif key == "algorithm":
+            number += 1
+            _algorithm_section(story, styles, active.heading_for(key, number))
+        elif key in ("ecb", "cbc", "ctr"):
+            number += 1
+            _mode_section(
+                story, styles, key.upper(), result_map.get(key.upper()), include_traces,
+                active.heading_for(key, number),
+            )
+        elif key == "comparison":
+            number += 1
+            story.append(PageBreak())  # bagian sintesis
+            _comparison_section(story, styles, result_map, active.heading_for(key, number))
+        elif key == "conclusion":
+            number += 1
+            _conclusion_section(story, styles, result_map, metadata, active.heading_for(key, number))
+        elif key == "limitations":
+            number += 1
+            _limitations_section(story, styles, active.heading_for(key, number))
+        elif key == "appendix":
+            if include_traces:
+                _appendix(story, styles, result_map)
 
     doc.multiBuild(
         story,

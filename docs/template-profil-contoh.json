@@ -1,0 +1,24 @@
+{
+  "institution": "Universitas Contoh - Fakultas Teknik",
+  "accent_color": "#1F4E79",
+  "font_family": "times",
+  "header_text": "Kriptografi - Laporan Praktikum Block Cipher",
+  "footer_text": "Dokumen ini dibuat otomatis oleh CipherLab (toy cipher 16-bit, hanya untuk edukasi).",
+  "sections": [
+    "toc",
+    "summary",
+    "purpose",
+    "algorithm",
+    "ecb",
+    "cbc",
+    "ctr",
+    "comparison",
+    "conclusion",
+    "limitations",
+    "appendix"
+  ],
+  "section_titles": {
+    "summary": "Ringkasan Hasil Praktikum",
+    "conclusion": "Pembahasan dan Kesimpulan"
+  }
+}

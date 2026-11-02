@@ -41,6 +41,7 @@ Melalui antarmuka berbasis Streamlit yang responsif dan modern, pengguna dapat:
 - **Visualisator Interaktif**: Inspeksi HEX/BIN per blok dan penelusuran ronde Feistel langkah demi langkah ($k_1$ hingga $k_8$).
 - **Tabel Perbandingan Samping-Menyamping**: Analisis langsung terkait rumus, penggunaan IV/counter, padding, dan dependensi antarblok.
 - **Laporan PDF Profesional**: Membuat dan mengunduh laporan eksekusi lengkap menggunakan ReportLab langsung dari *session state* aplikasi.
+- **Profil Template Laporan**: Kustomisasi tampilan PDF — logo institusi, warna aksen, font, teks header/footer, serta pemilihan, pengurutan, dan penggantian judul bagian. Profil dapat dimuat dari berkas JSON/YAML sehingga template bisa dibuat dosen/asisten lalu dibagikan.
 - **Manajemen Anggota Kelompok Dinamis**: Menambah atau menghapus anggota kelompok dengan nama (wajib) dan NIM (opsional).
 - **Nama File PDF Kustom**: Nama file PDF otomatis yang dapat disesuaikan sebelum diunduh.
 - **Pelacakan Status Real-time**: Label status otomatis (`BERHASIL`, `GAGAL`, `Belum dijalankan`) per mode.
@@ -71,6 +72,7 @@ CipherLab/
 ├── reports/                        # Generator laporan PDF dan eksportir
 │   ├── __init__.py
 │   ├── pdf_report.py               # Generator PDF ReportLab
+│   ├── template.py                 # Profil template (warna, font, logo, susunan bagian)
 │   └── export.py                   # Utilitas ekspor Markdown / CSV
 ├── tests/                          # Suite pengujian otomatis yang komprehensif
 │   ├── ref_impl.py                 # Implementasi referensi independen (KAT)
@@ -82,12 +84,13 @@ CipherLab/
 │   ├── test_encoding.py            # Pengujian utilitas encoding
 │   ├── test_pipeline.py            # Pengujian verifikasi pipa eksekusi
 │   ├── test_export.py              # Pengujian ekspor
-│   └── test_pdf_report.py          # Pengujian pembuatan laporan PDF
-├── PDF-REPORT-CHECKLIST.md         # Checklist implementasi fitur laporan PDF
+│   ├── test_pdf_report.py          # Pengujian pembuatan laporan PDF
+│   └── test_template.py            # Pengujian profil template laporan
 └── docs/                           # Dokumentasi dan aset
     ├── DESIGN-REFERENCE.md
     ├── contoh-laporan.pdf          # Contoh laporan PDF dari eksekusi aktual
     ├── contoh-laporan.md           # Contoh ekspor Markdown dari sesi yang sama
+    ├── template-profil-contoh.json # Contoh profil template laporan (warna, font, susunan)
     ├── PDF/
     │   └── Laporan_CipherLab_contoh.pdf
     └── screenshots/                # Tangkapan layar aplikasi web (live)
@@ -96,7 +99,8 @@ CipherLab/
         ├── playground-lanjutan.png
         ├── visualizer.png
         ├── comparison.png
-        └── reports.png
+        ├── reports.png
+        └── template.png            # Panel Profil Template Laporan (terbuka)
 ```
 
 ---
@@ -222,9 +226,15 @@ Tabel perbandingan analitis berdampingan yang merinci rumus, padding, penggunaan
 </div>
 
 ### 6. Halaman Laporan (Reports)
-Manajemen anggota kelompok, pengeditan nama file PDF kustom, dan pembuatan laporan PDF sekali klik.
+Manajemen anggota kelompok, pengeditan nama file PDF kustom, dan pembuatan laporan PDF sekali klik. Panel **Profil Template Laporan** (opsional) tersedia di sini untuk menyesuaikan tampilan.
 <div align="center">
   <img src="docs/screenshots/reports.png" alt="Pratinjau Laporan" width="85%"/>
+</div>
+
+### 7. Panel Profil Template Laporan
+Kustomisasi tampilan PDF: logo & nama institusi, warna aksen, font, header/footer, serta pemilihan, pengurutan, dan penggantian judul bagian. Profil dapat diunduh/dimuat sebagai JSON/YAML.
+<div align="center">
+  <img src="docs/screenshots/template.png" alt="Pratinjau Profil Template Laporan" width="85%"/>
 </div>
 
 ---
@@ -249,6 +259,59 @@ persis sama dengan yang Anda dapatkan saat menekan **Unduh Laporan PDF** di hala
 6. Klik **Unduh Laporan PDF**. PDF dibuat sepenuhnya lokal dengan ReportLab — identitas kelompok, ringkasan, parameter, tabel blok HEX/BIN per mode, trace ronde Feistel, hasil dekripsi, status verifikasi, perbandingan mode, kesimpulan, batasan keamanan, daftar isi, serta lampiran trace lengkap dan jadwal kunci.
 
 Tersedia juga ekspor **Markdown** dan **CSV** dari data eksekusi yang sama pada halaman Reports.
+
+---
+
+## Profil Template Laporan
+
+Halaman **Reports** menyediakan panel **🎨 Profil Template Laporan** untuk menyesuaikan
+tampilan dan susunan PDF tanpa mengubah isinya. Isi laporan **tetap 100% berasal dari
+eksekusi aktual**; panel ini hanya mengatur presentasi.
+
+### Tingkat A — Atur lewat panel
+
+- **Logo institusi** (PNG/JPG) dan **nama institusi** pada halaman sampul.
+- **Warna aksen** — dipakai untuk garis judul dan latar kepala tabel (warna teks otomatis disesuaikan agar tetap terbaca).
+- **Font** laporan: *Vera* (bawaan), *Helvetica*, atau *Times*.
+- **Teks header & footer** berjalan (opsional).
+- **Bagian laporan** — centang untuk menyertakan, ubah kolom *Urutan* untuk menyusun ulang, dan isi *Judul khusus* untuk mengganti judul bagian.
+
+### Tingkat B — Muat/bagikan berkas template
+
+Klik **Unduh profil template (JSON)** untuk mengunduh pengaturan saat ini, lalu bagikan ke
+mahasiswa. Sebaliknya, **Muat profil template (JSON/YAML)** memuat profil yang dibuat orang
+lain dan langsung menerapkannya. Contoh berkas tersedia di
+[`docs/template-profil-contoh.json`](docs/template-profil-contoh.json).
+
+```json
+{
+  "institution": "Universitas Contoh - Fakultas Teknik",
+  "accent_color": "#1F4E79",
+  "font_family": "times",
+  "header_text": "Kriptografi - Laporan Praktikum Block Cipher",
+  "footer_text": "Dokumen dibuat otomatis oleh CipherLab.",
+  "sections": ["toc", "summary", "purpose", "algorithm", "ecb", "cbc", "ctr",
+               "comparison", "conclusion", "limitations", "appendix"],
+  "section_titles": { "summary": "Ringkasan Hasil Praktikum" }
+}
+```
+
+| Kunci | Keterangan |
+| :--- | :--- |
+| `institution` | Nama institusi pada halaman sampul. |
+| `accent_color` | Warna aksen `#RRGGBB` (atau `#RGB`). |
+| `font_family` | `vera`, `helvetica`, atau `times`. |
+| `header_text` / `footer_text` | Teks header/footer berjalan (kosong = teks bawaan). |
+| `sections` | Urutan bagian yang disertakan (lihat daftar kunci di bawah). |
+| `section_titles` | Pengganti judul per bagian (opsional). |
+| `logo_base64` | Logo PNG/JPG dalam base64 (opsional, diisi otomatis saat mengunduh bila ada logo). |
+
+Kunci bagian yang valid: `toc`, `summary`, `purpose`, `algorithm`, `ecb`, `cbc`, `ctr`,
+`comparison`, `conclusion`, `limitations`, `appendix`.
+
+> Kotak **peringatan keamanan** pada halaman sampul selalu disertakan dan tidak dapat
+> dihilangkan lewat template, agar konteks "toy cipher 16-bit, bukan untuk data nyata"
+> tetap tampil.
 
 ---
 

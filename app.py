@@ -10,6 +10,7 @@ from __future__ import annotations
 import uuid
 from datetime import date
 
+import pandas as pd
 import streamlit as st
 
 from crypto.encoding import (
@@ -32,7 +33,22 @@ from crypto.feistel16 import (
 )
 from crypto.pipeline import SUPPORTED_MODES, execute_mode, redecrypt_result
 from crypto.results import ModeResult
-from reports import ReportLabMissingError, ReportMetadata, Member, build_pdf_bytes, default_filename, resolve_filename
+from reports import (
+    DEFAULT_ACCENT,
+    DEFAULT_SECTIONS,
+    FONT_LABELS,
+    Member,
+    ReportLabMissingError,
+    ReportMetadata,
+    ReportTemplate,
+    SECTION_KEYS,
+    SECTION_LABELS,
+    build_pdf_bytes,
+    default_filename,
+    load_template_text,
+    resolve_filename,
+    template_to_json,
+)
 from reports.export import results_to_csv, results_to_markdown
 
 st.set_page_config(
@@ -82,6 +98,12 @@ def init_state() -> None:
         "id_lecturer": "",
         "id_class": "",
         "id_notes": "",
+        "tpl_institution": "",
+        "tpl_accent": DEFAULT_ACCENT,
+        "tpl_font": "vera",
+        "tpl_header": "",
+        "tpl_footer": "",
+        "tpl_logo": None,
     }
     for key, value in defaults.items():
         st.session_state.setdefault(key, value)
@@ -137,6 +159,193 @@ def build_metadata() -> ReportMetadata:
         notes=st.session_state.get("id_notes", ""),
         filename=st.session_state.get("pdf_filename", ""),
     )
+
+
+# ---------------------------------------------------------------------------
+# Profil template laporan (tampilan & susunan bagian)
+# ---------------------------------------------------------------------------
+
+_SECTION_LABEL_TO_KEY = {label: key for key, label in SECTION_LABELS.items()}
+_TEMPLATE_STATE_KEYS = (
+    "tpl_institution",
+    "tpl_accent",
+    "tpl_font",
+    "tpl_header",
+    "tpl_footer",
+    "tpl_logo",
+    "tpl_editor",
+    "tpl_editor_data",
+    "tpl_logo_file",
+    "tpl_file_applied",
+)
+
+
+def _sections_dataframe(template: ReportTemplate) -> pd.DataFrame:
+    """Tabel editor bagian: semua bagian ditampilkan, urut sesuai template."""
+    order = list(template.sections) + [key for key in SECTION_KEYS if key not in template.sections]
+    rows = [
+        {
+            "Sertakan": key in template.sections,
+            "Bagian": SECTION_LABELS[key],
+            "Judul khusus (opsional)": template.section_titles.get(key, ""),
+            "Urutan": index,
+        }
+        for index, key in enumerate(order, start=1)
+    ]
+    return pd.DataFrame(rows)
+
+
+def _parse_section_rows(rows) -> tuple[tuple[str, ...] | None, dict[str, str]]:
+    """Ubah isi tabel editor menjadi daftar bagian + judul khusus."""
+    if rows is None:
+        return None, {}
+    if isinstance(rows, pd.DataFrame):
+        records = rows.to_dict("records")
+    elif isinstance(rows, list):
+        records = rows
+    else:
+        return None, {}
+    included: list[tuple[float, str]] = []
+    titles: dict[str, str] = {}
+    for record in records:
+        key = _SECTION_LABEL_TO_KEY.get(str(record.get("Bagian", "")))
+        if key is None:
+            continue
+        title = str(record.get("Judul khusus (opsional)") or "").strip()
+        if title:
+            titles[key] = title
+        if not bool(record.get("Sertakan")):
+            continue
+        order = record.get("Urutan")
+        try:
+            order_value = float(order)
+        except (TypeError, ValueError):
+            order_value = 999.0
+        included.append((order_value, key))
+    included.sort(key=lambda pair: pair[0])
+    return tuple(key for _, key in included), titles
+
+
+def template_from_state() -> ReportTemplate:
+    """Bangun profil template dari session state (tanpa menyentuh widget)."""
+    sections, titles = _parse_section_rows(st.session_state.get("tpl_editor_data"))
+    return ReportTemplate(
+        institution=st.session_state.get("tpl_institution", ""),
+        accent_color=st.session_state.get("tpl_accent", DEFAULT_ACCENT),
+        font_family=st.session_state.get("tpl_font", "vera"),
+        header_text=st.session_state.get("tpl_header", ""),
+        footer_text=st.session_state.get("tpl_footer", ""),
+        sections=sections if sections is not None else DEFAULT_SECTIONS,
+        section_titles=titles,
+        logo=st.session_state.get("tpl_logo"),
+    )
+
+
+def _apply_loaded_template(template: ReportTemplate, name: str) -> None:
+    """Terapkan profil hasil unggahan ke session state lalu rerun."""
+    st.session_state["tpl_institution"] = template.institution
+    st.session_state["tpl_accent"] = template.accent_color
+    st.session_state["tpl_font"] = template.font_family
+    st.session_state["tpl_header"] = template.header_text
+    st.session_state["tpl_footer"] = template.footer_text
+    st.session_state["tpl_logo"] = template.logo
+    st.session_state["tpl_editor_data"] = _sections_dataframe(template)
+    st.session_state["tpl_editor"] = _sections_dataframe(template)
+    st.session_state["tpl_loaded_name"] = name
+    st.rerun()
+
+
+def _render_template_profile() -> None:
+    """Panel Tingkat A (form) + Tingkat B (muat/unduh JSON/YAML)."""
+    with st.expander("🎨 Profil Template Laporan (opsional)", expanded=False):
+        if st.session_state.pop("tpl_reset_requested", False):
+            for key in _TEMPLATE_STATE_KEYS:
+                st.session_state.pop(key, None)
+
+        st.caption(
+            "Mengubah **tampilan dan susunan** laporan saja (warna, font, logo, "
+            "header/footer, pilihan & urutan bagian). Isi laporan tetap 100% berasal "
+            "dari hasil eksekusi aktual."
+        )
+
+        uploaded = st.file_uploader(
+            "Muat profil template (JSON/YAML)",
+            type=["json", "yaml", "yml"],
+            key="tpl_file",
+            help="Profil bisa dibuat dosen/asisten lalu dibagikan ke mahasiswa.",
+        )
+        if uploaded is not None:
+            signature = f"{uploaded.name}:{uploaded.size}"
+            if st.session_state.get("tpl_file_applied") != signature:
+                st.session_state["tpl_file_applied"] = signature
+                try:
+                    loaded = load_template_text(uploaded.getvalue().decode("utf-8"), uploaded.name)
+                except (ValueError, UnicodeDecodeError) as exc:
+                    st.error(f"Gagal memuat template: {exc}")
+                else:
+                    _apply_loaded_template(loaded, uploaded.name)
+
+        col_dl, col_reset = st.columns([2, 1])
+        col_dl.download_button(
+            "Unduh profil template (JSON)",
+            data=template_to_json(template_from_state()),
+            file_name="template-laporan-cipherlab.json",
+            mime="application/json",
+            use_container_width=True,
+            key="tpl_download",
+        )
+        if col_reset.button("Reset profil", use_container_width=True, key="tpl_reset"):
+            st.session_state["tpl_reset_requested"] = True
+            st.rerun()
+
+        st.divider()
+        col1, col2 = st.columns(2)
+        col1.text_input(
+            "Nama institusi (opsional)", key="tpl_institution",
+            placeholder="mis. Universitas Contoh - Fakultas Teknik",
+        )
+        col2.color_picker("Warna aksen (tabel & garis judul)", key="tpl_accent")
+        col3, col4 = st.columns(2)
+        col3.selectbox(
+            "Font laporan", options=list(FONT_LABELS),
+            format_func=lambda key: FONT_LABELS[key], key="tpl_font",
+        )
+        col4.text_input("Teks header berjalan (opsional)", key="tpl_header")
+        st.text_input("Teks footer berjalan (opsional)", key="tpl_footer")
+
+        logo_file = st.file_uploader(
+            "Logo institusi (PNG/JPG, opsional)", type=["png", "jpg", "jpeg"], key="tpl_logo_file",
+        )
+        if logo_file is not None:
+            st.session_state["tpl_logo"] = logo_file.getvalue()
+        if st.session_state.get("tpl_logo"):
+            st.image(st.session_state["tpl_logo"], width=110)
+            if st.button("Hapus logo", key="tpl_logo_clear"):
+                st.session_state["tpl_logo"] = None
+                st.session_state.pop("tpl_logo_file", None)
+                st.rerun()
+
+        st.markdown(
+            "**Bagian laporan** — centang untuk menyertakan, ubah kolom *Urutan* untuk "
+            "menyusun, dan isi *Judul khusus* bila ingin mengganti judul bagian."
+        )
+        current = st.session_state.get("tpl_editor_data")
+        data = current if isinstance(current, pd.DataFrame) else _sections_dataframe(template_from_state())
+        edited = st.data_editor(
+            data,
+            key="tpl_editor",
+            hide_index=True,
+            use_container_width=True,
+            num_rows="fixed",
+            column_config={
+                "Sertakan": st.column_config.CheckboxColumn("Sertakan", default=True),
+                "Bagian": st.column_config.TextColumn("Bagian", disabled=True),
+                "Judul khusus (opsional)": st.column_config.TextColumn("Judul khusus (opsional)"),
+                "Urutan": st.column_config.NumberColumn("Urutan", min_value=1, max_value=99, step=1),
+            },
+        )
+        if isinstance(edited, pd.DataFrame):
+            st.session_state["tpl_editor_data"] = edited
 
 
 # ---------------------------------------------------------------------------
@@ -459,6 +668,8 @@ def page_reports() -> None:
 
         _render_member_rows()
 
+        _render_template_profile()
+
         st.subheader("Nama file PDF")
         st.text_input(
             "Nama file (tanpa .pdf)",
@@ -499,11 +710,16 @@ def page_reports() -> None:
         st.checkbox("Sertakan Lampiran trace ronde lengkap (per blok)", key="include_traces")
 
         metadata = build_metadata()
+        template = template_from_state()
         can_download = bool(executed)
         pdf_bytes = None
         if can_download:
             try:
-                pdf_bytes = build_pdf_bytes(metadata, results, include_traces=st.session_state["include_traces"])
+                pdf_bytes = build_pdf_bytes(
+                    metadata, results,
+                    include_traces=st.session_state["include_traces"],
+                    template=template,
+                )
             except ReportLabMissingError as exc:
                 st.error(str(exc))
                 can_download = False

@@ -4,3 +4,4 @@
 
 streamlit>=1.36
 reportlab>=4.0
+pyyaml>=6.0          # memuat profil template laporan berformat YAML (JSON via stdlib)
