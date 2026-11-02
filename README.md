@@ -8,9 +8,11 @@
 [![Pytest](https://img.shields.io/badge/Pytest-Passing-green.svg)](https://docs.pytest.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/deploy?repository=zann06/Enskripsi-Block-Cipher&branch=master&mainModule=app.py)
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://enskripsi-block-cipher-soegjxtt8xorm5fehc6bcg.streamlit.app/)
 
 *Aplikasi web dan laboratorium edukasi untuk mengeksplorasi operasi block cipher menggunakan jaringan Feistel 16-bit kustom.*
+
+**🌐 Demo live:** [enskripsi-block-cipher-soegjxtt8xorm5fehc6bcg.streamlit.app](https://enskripsi-block-cipher-soegjxtt8xorm5fehc6bcg.streamlit.app/)
 
 </div>
 
@@ -143,11 +145,15 @@ python -m pytest -v
 
 ## Demo Live (Streamlit Community Cloud)
 
-Repositori ini siap dideploy ke **Streamlit Community Cloud** (gratis) sehingga aplikasi dapat
-diakses melalui URL publik. Konfigurasi sudah disiapkan: [`requirements.txt`](requirements.txt)
-ringkas dan tema gelap di [`.streamlit/config.toml`](.streamlit/config.toml).
+Aplikasi ini sudah dideploy dan **live** di Streamlit Community Cloud:
 
-### Cara Deploy
+> ### 🌐 [https://enskripsi-block-cipher-soegjxtt8xorm5fehc6bcg.streamlit.app](https://enskripsi-block-cipher-soegjxtt8xorm5fehc6bcg.streamlit.app/)
+
+Klik badge **Open in Streamlit** di bagian atas README, atau buka URL di atas langsung di peramban.
+Konfigurasi deploy memakai [`requirements.txt`](requirements.txt) yang ringkas dan tema gelap dari
+[`.streamlit/config.toml`](.streamlit/config.toml).
+
+### Cara Deploy Ulang / Fork
 
 1. Masuk ke **[share.streamlit.io](https://share.streamlit.io)** dengan akun GitHub.
 2. Klik **Create app** → pilih **Deploy a public app from GitHub**.
@@ -162,11 +168,11 @@ ringkas dan tema gelap di [`.streamlit/config.toml`](.streamlit/config.toml).
 4. Buka **Advanced settings → Python version** dan pilih **3.11** (atau **3.12**) — versi ini
    diuji pada lingkungan lokal. Penting: **jangan** memakai `runtime.txt`, karena Streamlit
    Community Cloud **mengabaikannya** dan memilih Python default (3.13/3.14).
-5. Klik **Deploy**. Streamlit memasang `requirements.txt`, lalu menerbitkan URL publik seperti
-   `https://<nama-app>.streamlit.app` yang bisa dibagikan.
+5. Klik **Deploy**. Streamlit memasang `requirements.txt`, lalu menerbitkan URL publik
+   (`https://<nama-app>.streamlit.app`) — inilah tipe URL live aplikasi ini.
 
-> Setelah aplikasi live, ganti tautan badge **Open in Streamlit** di bagian atas README ini
-> dengan URL `.streamlit.app` hasil deploy.
+> Badge **Open in Streamlit** di bagian atas README sudah menunjuk ke aplikasi live. Jika Anda
+> mem-fork repo ini lalu deploy ulang, ganti tautan badge tersebut dengan URL `.streamlit.app` milik Anda.
 
 **Catatan deployment**
 
