@@ -88,11 +88,13 @@ CipherLab/
 │   └── test_template.py            # Pengujian profil template laporan
 └── docs/                           # Dokumentasi dan aset
     ├── DESIGN-REFERENCE.md
-    ├── contoh-laporan.pdf          # Contoh laporan PDF dari eksekusi aktual
+    ├── contoh-laporan.pdf          # Contoh laporan PDF (tampilan bawaan)
+    ├── contoh-laporan-template.pdf # Contoh laporan PDF memakai profil template
     ├── contoh-laporan.md           # Contoh ekspor Markdown dari sesi yang sama
     ├── template-profil-contoh.json # Contoh profil template laporan (warna, font, susunan)
     ├── PDF/
-    │   └── Laporan_CipherLab_contoh.pdf
+    │   ├── Laporan_CipherLab_contoh.pdf
+    │   └── Laporan_CipherLab_contoh_template.pdf
     └── screenshots/                # Tangkapan layar aplikasi web (live)
         ├── dashboard.png
         ├── playground.png
@@ -248,6 +250,7 @@ persis sama dengan yang Anda dapatkan saat menekan **Unduh Laporan PDF** di hala
 
 - **[Lihat Contoh Laporan PDF (docs/contoh-laporan.pdf)](docs/contoh-laporan.pdf)** — juga tersalin di [`docs/PDF/Laporan_CipherLab_contoh.pdf`](docs/PDF/Laporan_CipherLab_contoh.pdf).
 - **[Lihat Contoh Ekspor Markdown (docs/contoh-laporan.md)](docs/contoh-laporan.md)** — versi teks dari data eksekusi yang sama (setara tombol *Unduh Markdown*).
+- **[Lihat Contoh Laporan dengan Profil Template (docs/contoh-laporan-template.pdf)](docs/contoh-laporan-template.pdf)** — data eksekusi yang sama, dirender memakai [`docs/template-profil-contoh.json`](docs/template-profil-contoh.json) (font Times, aksen biru, judul bagian disesuaikan).
 
 ## Cara Menggunakan Laporan PDF
 
@@ -282,6 +285,10 @@ Klik **Unduh profil template (JSON)** untuk mengunduh pengaturan saat ini, lalu 
 mahasiswa. Sebaliknya, **Muat profil template (JSON/YAML)** memuat profil yang dibuat orang
 lain dan langsung menerapkannya. Contoh berkas tersedia di
 [`docs/template-profil-contoh.json`](docs/template-profil-contoh.json).
+
+Lihat hasilnya: **[contoh laporan dengan profil ini (docs/contoh-laporan-template.pdf)](docs/contoh-laporan-template.pdf)**
+— bandingkan dengan [laporan tampilan bawaan](docs/contoh-laporan.pdf). Keduanya memakai data
+eksekusi yang sama; yang berbeda hanya tampilannya.
 
 ```json
 {

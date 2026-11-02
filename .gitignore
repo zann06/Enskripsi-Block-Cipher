@@ -12,6 +12,7 @@ venv/
 output/
 *.pdf
 !docs/contoh-laporan.pdf
+!docs/contoh-laporan-template.pdf
 !docs/PDF/*.pdf
 
 # Peluncur lokal & metadata OS
