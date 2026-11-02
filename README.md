@@ -51,6 +51,8 @@ CipherLab/
 ├── requirements.txt                # Dependensi pustaka Python
 ├── pytest.ini                      # Konfigurasi Pytest
 ├── conftest.py                     # Path root untuk import saat testing
+├── .streamlit/
+│   └── config.toml                 # Tema gelap & konfigurasi server Streamlit
 ├── crypto/                         # Mesin inti kriptografi
 │   ├── __init__.py
 │   ├── feistel16.py                # Inti cipher Feistel 16-bit & penjadwalan kunci
@@ -76,14 +78,14 @@ CipherLab/
 │   ├── test_pipeline.py            # Pengujian verifikasi pipa eksekusi
 │   ├── test_export.py              # Pengujian ekspor
 │   └── test_pdf_report.py          # Pengujian pembuatan laporan PDF
-├── PRD.md / PROMPT.md              # Dokumen spesifikasi
 ├── PDF-REPORT-CHECKLIST.md         # Checklist implementasi fitur laporan PDF
 └── docs/                           # Dokumentasi dan aset
     ├── DESIGN-REFERENCE.md
     ├── contoh-laporan.pdf          # Contoh laporan PDF dari eksekusi aktual
+    ├── contoh-laporan.md           # Contoh ekspor Markdown dari sesi yang sama
     ├── PDF/
     │   └── Laporan_CipherLab_contoh.pdf
-    └── screenshots/                # Tangkapan layar aplikasi
+    └── screenshots/                # Tangkapan layar aplikasi web (live)
         ├── dashboard.png
         ├── playground.png
         ├── playground-lanjutan.png
@@ -123,6 +125,7 @@ streamlit run app.py
 ```
 
 Buka URL lokal yang ditampilkan di terminal (biasanya `http://localhost:8501`) pada peramban web Anda.
+Tema gelap dibaca otomatis dari [`.streamlit/config.toml`](.streamlit/config.toml).
 
 ### Menjalankan Pengujian (Testing)
 
@@ -134,7 +137,10 @@ python -m pytest -v
 
 ## Tangkapan Layar Aplikasi
 
-Berikut adalah pratinjau antarmuka pengguna CipherLab pada halaman-halaman utamanya:
+Berikut adalah pratinjau **aplikasi web yang berjalan (live)** pada halaman-halaman utamanya.
+Tangkapan layar diambil dari sesi contoh: ECB, CBC, dan CTR dijalankan dengan tombol
+**Use Example**, lalu identitas laporan diisi di halaman Reports. Tema gelap diaktifkan melalui
+[`.streamlit/config.toml`](.streamlit/config.toml).
 
 ### 1. Halaman Dasbor (Dashboard)
 Gambaran umum cipher Feistel 16-bit, kartu navigasi cepat, dan daftar periksa status eksekusi mode langsung.
@@ -176,9 +182,13 @@ Manajemen anggota kelompok, pengeditan nama file PDF kustom, dan pembuatan lapor
 
 ## Contoh Laporan PDF
 
-Anda dapat memeriksa contoh laporan PDF yang telah dibuat sebelumnya langsung dari hasil eksekusi aplikasi aktual:
+Contoh laporan di bawah dihasilkan langsung oleh aplikasi web untuk sesi contoh bawaan
+(*Use Example*: plaintext `Kriptografi itu menyenangkan!`, kunci `1A2B`, IV `0F0F`,
+counter `00C8`, ketiga mode tereksekusi dan terverifikasi **BERHASIL**). Karena itu isinya
+persis sama dengan yang Anda dapatkan saat menekan **Unduh Laporan PDF** di halaman Reports.
 
 - **[Lihat Contoh Laporan PDF (docs/contoh-laporan.pdf)](docs/contoh-laporan.pdf)** — juga tersalin di [`docs/PDF/Laporan_CipherLab_contoh.pdf`](docs/PDF/Laporan_CipherLab_contoh.pdf).
+- **[Lihat Contoh Ekspor Markdown (docs/contoh-laporan.md)](docs/contoh-laporan.md)** — versi teks dari data eksekusi yang sama (setara tombol *Unduh Markdown*).
 
 ## Cara Menggunakan Laporan PDF
 

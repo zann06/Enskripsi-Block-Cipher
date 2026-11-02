@@ -1,0 +1,6 @@
+# CipherLab — Streamlit configuration
+# Tema gelap agar tampilan web konsisten dengan docs/DESIGN-REFERENCE.md
+# dan tangkapan layar pada docs/screenshots/.
+
+[theme]
+base = "dark"
